@@ -189,7 +189,7 @@ select:focus{
 
 .btn{
 
-    background:#198754;
+    background:#0f4c81;
 
     color:white;
 
@@ -210,7 +210,7 @@ select:focus{
 
 .btn:hover{
 
-    background:#146c43;
+    background:#0b3d68;
 
 }
 
@@ -222,6 +222,8 @@ select:focus{
 }
 </style>
 
+<link rel="stylesheet" href="/app-popups.css">
+<script src="/app-popups.js"></script>
 </head>
 
 <body>
@@ -926,9 +928,7 @@ function savePayment(){
 
     .then(function(data){
 
-        alert("Payment Saved Successfully");
-
-        location.reload();
+        appPopups.alert("Payment Saved Successfully").then(() => location.reload());
 
     })
 
@@ -955,14 +955,10 @@ function savePayment(){
 
 function closePage(){
 
-    if(
-        window.parent &&
-        typeof window.parent.closeModal ===
-        "function"
-    ){
-
+    if (window.parent !== window && typeof window.parent.closeModal === "function") {
         window.parent.closeModal();
-
+    } else {
+        window.location.href = "dashboard.html";
     }
 
 }

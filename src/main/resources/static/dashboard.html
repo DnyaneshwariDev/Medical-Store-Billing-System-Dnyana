@@ -625,13 +625,13 @@ Supplier/Wholesaler Master
 </a>
 <a href="#"
  tabindex="0"
-onclick="openPage('gst-master.html')">
+onclick="openPage('gst-master.html');return false;">
 GST Master
 </a>
 
 <a href="#"
  tabindex="0"
-onclick="openPage('schedule-master.html')">
+onclick="openPage('schedule-master.html');return false;">
 Schedule Master
 </a>
 <a href="#"
@@ -666,7 +666,7 @@ Supplier Payment History
 onclick="openPage('daily-report.html');return false;">
 Daily Transaction Report
 </a>
-<a href="#" onclick="openPage('movement-report.html')">
+<a href="#" onclick="openPage('movement-report.html');return false;">
 Inventory Movement Report
 </a>
 <a href="#"
@@ -1282,12 +1282,7 @@ function closeAlertModal(){
     document.getElementById("alertFrame").src = "";
 }
 function openPage(page){
-
-    document.getElementById("pageModal")
-    .style.display = "block";
-
-    document.getElementById("pageFrame")
-    .src = page;
+    window.location.href = page;
 }
 
 function closeModal(){

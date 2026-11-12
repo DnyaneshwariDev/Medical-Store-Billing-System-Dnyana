@@ -158,6 +158,13 @@ public class DashboardController {
                           .toLocalDate()
                           .equals(LocalDate.now())) {
 
+                    if (item.getMedicine() == null) {
+                        todayCost += item.getAmount() == null
+                                ? 0
+                                : item.getAmount();
+                        continue;
+                    }
+
                     Double purchasePrice =
                         item.getMedicine().getPurchasePrice();
 

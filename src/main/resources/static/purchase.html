@@ -19,7 +19,7 @@ body{
     font-size:22px;
 }
 .header{
-background:#198754;
+background:linear-gradient(135deg,#0f4c81,#2196f3);
 color:white;
 padding:20px;
 font-size:28px;
@@ -104,7 +104,7 @@ box-shadow:0 2px 10px rgba(0,0,0,.2);
 
     height:40px;
 
-    background:#198754;
+    background:#0f4c81;
 
     color:white;
 
@@ -122,7 +122,7 @@ box-shadow:0 2px 10px rgba(0,0,0,.2);
 
 .btn:hover{
 
-    background:#146c43;
+    background:#0b3d68;
 
 }
 
@@ -518,7 +518,7 @@ th{
 
 .btn{
 
-    background:#198754;
+    background:#0f4c81;
 
     color:white;
 
@@ -539,11 +539,12 @@ th{
 
 .btn:hover{
 
-    background:#146c43;
+    background:#0b3d68;
 
 }
 </style>
-
+<link rel="stylesheet" href="/app-popups.css">
+<script src="/app-popups.js"></script>
 </head>
 
 <body>
@@ -575,23 +576,10 @@ th{
 
            <label>Supplier :</label>
 
-<div class="custom-select-wrapper">
-
-    <input
-        type="text"
-        id="supplierSelect"
-        placeholder="Select Supplier"
-        autocomplete="off"
-        readonly
-    >
-
-    <div id="supplierDropdown"
-         class="custom-dropdown">
-    </div>
-
-    <input type="hidden" id="supplierId">
-
-</div>
+<select id="supplierSelect">
+    <option value="">Select Supplier</option>
+</select>
+<input type="hidden" id="supplierId">
         </div>
 
     </div>
@@ -649,28 +637,13 @@ th{
             <input type="date" id="expiryDate">
 <label>Gst % :</label>
 
-<div class="custom-select-wrapper">
-
-    <input
-        type="text"
-        id="gst"
-        value="0"
-        placeholder="Select GST"
-        autocomplete="off"
-        readonly
-    >
-
-    <div id="gstDropdown" class="custom-dropdown">
-
-        <div data-value="0">0%</div>
-        <div data-value="5">5%</div>
-        <div data-value="12">12%</div>
-        <div data-value="18">18%</div>
-        <div data-value="28">28%</div>
-
-    </div>
-
-</div>
+<select id="gst">
+    <option value="0">0%</option>
+    <option value="5">5%</option>
+    <option value="12">12%</option>
+    <option value="18">18%</option>
+    <option value="28">28%</option>
+</select>
         </div>
 
         <br>
@@ -730,10 +703,17 @@ Save Purchase
 
 let purchaseItems = [];
 
-loadSuppliers();
-loadMedicines();
 let suppliers = [];
-let supplierIndex = -1;
+
+const supplierSelect =
+    document.getElementById("supplierSelect");
+
+supplierSelect.addEventListener("change", function(){
+
+    document.getElementById("supplierId").value =
+        supplierSelect.value;
+
+});
 
 function loadSuppliers(){
 
@@ -741,9 +721,19 @@ function loadSuppliers(){
     .then(res => res.json())
     .then(data => {
 
-        suppliers = data;
+        suppliers = Array.isArray(data) ? data : [];
 
-        renderSupplierDropdown();
+        supplierSelect.innerHTML =
+            '<option value="">Select Supplier</option>';
+
+        suppliers.forEach(function(supplier){
+
+            let option = document.createElement("option");
+            option.value = supplier.id;
+            option.textContent = supplier.supplierName;
+            supplierSelect.appendChild(option);
+
+        });
 
     })
     .catch(error => {
@@ -753,81 +743,11 @@ function loadSuppliers(){
     });
 
 }
-function selectSupplier(id,name){
-
-    document.getElementById("supplierId").value =
-        id;
-
-    document.getElementById("supplierSelect").value =
-        name;
-
-    supplierDropdown.style.display =
-        "none";
-
-    supplierIndex = -1;
-
-    document.getElementById("medicineSearch")
-        .focus();
-
-}
-const supplierInput =
-    document.getElementById("supplierSelect");
-
-const supplierDropdown =
-    document.getElementById("supplierDropdown");
-
-
-function renderSupplierDropdown(){
-
-    let html = "";
-
-    suppliers.forEach(function(s){
-
-        html += `
-            <div
-                data-id="${s.id}"
-                data-name="${s.supplierName}">
-                ${s.supplierName}
-            </div>
-        `;
-
-    });
-
-    supplierDropdown.innerHTML = html;
-
-}
-function highlightSupplier(){
-
-    let items =
-        supplierDropdown.querySelectorAll(
-            "div[data-id]"
-        );
-
-    items.forEach(function(item){
-
-        item.classList.remove("active");
-
-    });
-
-    if(
-        supplierIndex >= 0 &&
-        supplierIndex < items.length
-    ){
-
-        let selected =
-            items[supplierIndex];
-
-        selected.classList.add("active");
-
-        selected.scrollIntoView({
-            block:"nearest"
-        });
-
-    }
-
-}
 let medicines = [];
 let medicineIndex = -1;
+
+loadSuppliers();
+loadMedicines();
 
 function loadMedicines(){
 
@@ -1044,372 +964,6 @@ medicineDropdown.addEventListener("click", function(e){
     );
 
 });
-supplierInput.addEventListener(
-	    "keydown",
-	    function(e){
-
-	        let items =
-	            supplierDropdown.querySelectorAll(
-	                "div[data-id]"
-	            );
-
-
-	        /* =========================
-	           ENTER
-	           Open / Select
-	        ========================= */
-
-	        if(e.key === "Enter"){
-
-	            e.preventDefault();
-	            e.stopPropagation();
-
-
-	            /* OPEN */
-
-	            if(
-	                supplierDropdown.style.display !== "block"
-	            ){
-
-	                supplierDropdown.style.display =
-	                    "block";
-
-	                supplierIndex = 0;
-
-	                highlightSupplier();
-
-	                return;
-
-	            }
-
-
-	            /* SELECT */
-
-	            if(items.length > 0){
-
-	                if(supplierIndex < 0)
-	                    supplierIndex = 0;
-
-	                let selected =
-	                    items[supplierIndex];
-
-	                selectSupplier(
-	                    selected.dataset.id,
-	                    selected.dataset.name
-	                );
-
-	            }
-
-	            return;
-	        }
-
-
-	        /* =========================
-	           ARROW DOWN
-	        ========================= */
-
-	        if(e.key === "ArrowDown"){
-
-	            e.preventDefault();
-	            e.stopPropagation();
-
-
-	            if(
-	                supplierDropdown.style.display !== "block"
-	            ){
-
-	                supplierDropdown.style.display =
-	                    "block";
-
-	                supplierIndex = 0;
-
-	            }
-	            else{
-
-	                supplierIndex++;
-
-	            }
-
-
-	            if(
-	                supplierIndex >= items.length
-	            ){
-
-	                supplierIndex = 0;
-
-	            }
-
-
-	            highlightSupplier();
-
-	            return;
-	        }
-
-
-	        /* =========================
-	           ARROW UP
-	        ========================= */
-
-	        if(e.key === "ArrowUp"){
-
-	            e.preventDefault();
-	            e.stopPropagation();
-
-
-	            if(
-	                supplierDropdown.style.display !== "block"
-	            ){
-
-	                supplierDropdown.style.display =
-	                    "block";
-
-	                supplierIndex =
-	                    items.length - 1;
-
-	            }
-	            else{
-
-	                supplierIndex--;
-
-	            }
-
-
-	            if(supplierIndex < 0){
-
-	                supplierIndex =
-	                    items.length - 1;
-
-	            }
-
-
-	            highlightSupplier();
-
-	            return;
-	        }
-
-
-	        /* =========================
-	           ESC
-	        ========================= */
-
-	        if(e.key === "Escape"){
-
-	            e.preventDefault();
-
-	            supplierDropdown.style.display =
-	                "none";
-
-	            supplierIndex = -1;
-
-	        }
-
-	    }
-	);
-let gstIndex = -1;
-
-const gstInput =
-    document.getElementById("gst");
-
-const gstDropdown =
-    document.getElementById("gstDropdown");
-
-
-function highlightGST(){
-
-    let items =
-        gstDropdown.querySelectorAll(
-            "div[data-value]"
-        );
-
-    items.forEach(function(item){
-
-        item.classList.remove("active");
-
-    });
-
-
-    if(
-        gstIndex >= 0 &&
-        gstIndex < items.length
-    ){
-
-        items[gstIndex]
-            .classList.add("active");
-
-        items[gstIndex]
-            .scrollIntoView({
-                block:"nearest"
-            });
-
-    }
-
-}
-
-
-gstInput.addEventListener(
-    "keydown",
-    function(e){
-
-        let items =
-            gstDropdown.querySelectorAll(
-                "div[data-value]"
-            );
-
-
-        /* =========================
-           ENTER
-        ========================= */
-
-        if(e.key === "Enter"){
-
-            e.preventDefault();
-            e.stopPropagation();
-
-
-            /* OPEN */
-
-            if(
-                gstDropdown.style.display !== "block"
-            ){
-
-                gstDropdown.style.display =
-                    "block";
-
-                gstIndex = 0;
-
-                highlightGST();
-
-                return;
-
-            }
-
-
-            /* SELECT */
-
-            if(items.length > 0){
-
-                if(gstIndex < 0)
-                    gstIndex = 0;
-
-                let selected =
-                    items[gstIndex];
-
-                gstInput.value =
-                    selected.dataset.value;
-
-                gstDropdown.style.display =
-                    "none";
-
-                gstIndex = -1;
-
-                document.getElementById("addItemBtn")
-                    .focus();
-
-            }
-
-            return;
-        }
-
-
-        /* =========================
-           DOWN
-        ========================= */
-
-        if(e.key === "ArrowDown"){
-
-            e.preventDefault();
-            e.stopPropagation();
-
-
-            if(
-                gstDropdown.style.display !== "block"
-            ){
-
-                gstDropdown.style.display =
-                    "block";
-
-                gstIndex = 0;
-
-            }
-            else{
-
-                gstIndex++;
-
-            }
-
-
-            if(gstIndex >= items.length){
-
-                gstIndex = 0;
-
-            }
-
-
-            highlightGST();
-
-            return;
-        }
-
-
-        /* =========================
-           UP
-        ========================= */
-
-        if(e.key === "ArrowUp"){
-
-            e.preventDefault();
-            e.stopPropagation();
-
-
-            if(
-                gstDropdown.style.display !== "block"
-            ){
-
-                gstDropdown.style.display =
-                    "block";
-
-                gstIndex =
-                    items.length - 1;
-
-            }
-            else{
-
-                gstIndex--;
-
-            }
-
-
-            if(gstIndex < 0){
-
-                gstIndex =
-                    items.length - 1;
-
-            }
-
-
-            highlightGST();
-
-            return;
-        }
-
-
-        /* =========================
-           ESC
-        ========================= */
-
-        if(e.key === "Escape"){
-
-            e.preventDefault();
-
-            gstDropdown.style.display =
-                "none";
-
-            gstIndex = -1;
-
-        }
-
-    }
-);
 function addItem(){
 
     let medicineId =
@@ -1430,20 +984,10 @@ function addItem(){
     let supplierSelect =
         document.getElementById("supplierSelect");
 
-    let supplierName = "";
-
-    if(
-        supplierSelect &&
-        supplierSelect.selectedIndex >= 0 &&
-        supplierSelect.options.length > 0
-    ){
-
-        supplierName =
-            supplierSelect.options[
-                supplierSelect.selectedIndex
-            ].text.trim();
-
-    }
+    let supplierName =
+        supplierSelect && supplierSelect.selectedIndex > 0
+        ? supplierSelect.options[supplierSelect.selectedIndex].text.trim()
+        : "";
 
 
     let qty =
@@ -1683,7 +1227,12 @@ headers:{
 body:JSON.stringify(request)
 
 })
-.then(res=>res.json())
+.then(async res=>{
+    if(!res.ok){
+        throw new Error(await res.text() || "Purchase save failed");
+    }
+    return res.json();
+})
 .then(data=>{
 
     alert("Purchase Saved");
@@ -1731,23 +1280,14 @@ body:JSON.stringify(request)
        CLOSE DROPDOWNS
     ========================= */
 
-    document.getElementById("supplierDropdown")
-        .style.display = "none";
-
     document.getElementById("medicineDropdown")
         .style.display = "none";
-
-    document.getElementById("gstDropdown")
-        .style.display = "none";
-
 
     /* =========================
        RESET INDEX
     ========================= */
 
-    supplierIndex = -1;
     medicineIndex = -1;
-    gstIndex = -1;
 
 
     /* =========================
@@ -1760,13 +1300,21 @@ body:JSON.stringify(request)
 
     },100);
 
+})
+.catch(error=>{
+    console.error("Purchase Save Error:", error);
+    alert("Purchase save failed.");
 });
 
 
 }
 function closePage(){
 
-    parent.closeModal();
+    if (window.parent !== window && typeof window.parent.closeModal === "function") {
+        window.parent.closeModal();
+    } else {
+        window.location.href = "dashboard.html";
+    }
 
 }
 function loadPurchases(){
@@ -1835,16 +1383,8 @@ document.addEventListener("keydown", function(e){
     let active =
         document.activeElement;
 
-
-    /* =========================================
-       SUPPLIER
-       स्वतःचा handler
-    ========================================= */
-
-    if(active.id === "supplierSelect"){
-
+    if(active.tagName === "SELECT"){
         return;
-
     }
 
 
@@ -1854,18 +1394,6 @@ document.addEventListener("keydown", function(e){
     ========================================= */
 
     if(active.id === "medicineSearch"){
-
-        return;
-
-    }
-
-
-    /* =========================================
-       GST
-       स्वतःचा handler
-    ========================================= */
-
-    if(active.id === "gst"){
 
         return;
 
@@ -1956,6 +1484,10 @@ document.addEventListener("keydown", function(e){
 
  const active =
      document.activeElement;
+
+ if(active.tagName === "SELECT"){
+     return;
+ }
 
 
  /*

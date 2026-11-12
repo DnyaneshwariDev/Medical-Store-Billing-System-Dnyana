@@ -18,7 +18,7 @@ body{
     justify-content:center;
     align-items:center;
     height:70px;
-    background:linear-gradient(135deg,#198754,#20c997);
+    background:linear-gradient(135deg,#0f4c81,#2196f3);
     color:white;
     font-size:28px;
     font-weight:bold;
@@ -64,7 +64,7 @@ body{
 }
 
 .card h2{
-    color:#198754;
+    color:#0f4c81;
     margin-top:10px;
 }
 
@@ -85,7 +85,7 @@ table{
 }
 
 th{
-    background:#198754;
+    background:#0f4c81;
     color:white;
     padding:12px;
 }
@@ -282,7 +282,11 @@ document.addEventListener("keydown", function(e){
 /* Close Page */
 function closePage(){
 
-    parent.closeModal();
+    if (window.parent !== window && typeof window.parent.closeModal === "function") {
+        window.parent.closeModal();
+    } else {
+        window.location.href = "dashboard.html";
+    }
 
 }
 </script>

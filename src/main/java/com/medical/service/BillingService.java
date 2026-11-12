@@ -83,52 +83,90 @@ public class BillingService {
         Bill savedBill =
                 billRepository.save(bill);
 
-        for (BillMedicineDto dto :
-                request.getMedicines()) {
+        if (request.getMedicines() == null
+                || request.getMedicines().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "A bill must contain at least one item");
+        }
 
-            Medicine medicine =
-                    medicineRepository.findById(
-                            dto.getMedicineId())
-                            .orElseThrow();
+        for (BillMedicineDto dto : request.getMedicines()) {
+            if (dto.getQuantity() == null || dto.getQuantity() <= 0) {
+                throw new IllegalArgumentException(
+                        "Item quantity must be greater than zero");
+            }
 
-            if (medicine.getQuantity()
-                    < dto.getQuantity()) {
+            Medicine medicine = dto.getMedicineId() == null
+                    ? null
+                    : medicineRepository.findById(dto.getMedicineId())
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                    "Selected medicine was not found"));
 
-                throw new RuntimeException(
+            if (medicine != null
+                    && (medicine.getQuantity() == null
+                            || medicine.getQuantity() < dto.getQuantity())) {
+                throw new IllegalArgumentException(
                         "Stock not available for "
                                 + medicine.getMedicineName());
             }
 
-            double amount =
-                    medicine.getMrp()
-                    * dto.getQuantity();
+            String medicineName = dto.getMedicineName() != null
+                    ? dto.getMedicineName().trim()
+                    : medicine == null ? null : medicine.getMedicineName();
+            if (medicineName == null || medicineName.isBlank()) {
+                throw new IllegalArgumentException(
+                        "Every bill item must have a medicine name");
+            }
+
+            Double unitPrice = dto.getUnitPrice() != null
+                    ? dto.getUnitPrice()
+                    : medicine == null ? null : medicine.getMrp();
+            if (unitPrice == null || !Double.isFinite(unitPrice) || unitPrice < 0) {
+                throw new IllegalArgumentException(
+                        "Every bill item must have a valid rate");
+            }
+
+            double amount = unitPrice * dto.getQuantity();
 
             BillItem item =
                     new BillItem();
 
             item.setBill(savedBill);
             item.setMedicine(medicine);
-            item.setQuantity(
-                    dto.getQuantity());
-
-            item.setUnitPrice(
-                    medicine.getMrp());
-
+            item.setQuantity(dto.getQuantity());
+            item.setUnitPrice(unitPrice);
             item.setAmount(amount);
-            item.setMedicineName(medicine.getMedicineName());
-            item.setBatchNo(medicine.getBatchNo());
-            item.setScheduleType(medicine.getScheduleType());
-            item.setUnit(medicine.getUnit());
-            item.setMrp(medicine.getMrp());
-            item.setExpiryDate(medicine.getExpiryDate());
+            item.setMedicineName(medicineName);
+            item.setCompanyName(valueOrFallback(
+                    dto.getCompanyName(),
+                    medicine == null ? null : medicine.getCompanyName()));
+            item.setBatchNo(valueOrFallback(
+                    dto.getBatchNo(),
+                    medicine == null ? null : medicine.getBatchNo()));
+            item.setScheduleType(valueOrFallback(
+                    dto.getScheduleType(),
+                    medicine == null ? null : medicine.getScheduleType()));
+            item.setUnit(valueOrFallback(
+                    dto.getUnit(),
+                    medicine == null ? null : medicine.getUnit()));
+            item.setMrp(unitPrice);
+            item.setGstPercent(dto.getGstPercent() != null
+                    ? dto.getGstPercent()
+                    : medicine == null ? null : medicine.getGstPercent());
+            item.setContents(valueOrFallback(
+                    dto.getContents(),
+                    medicine == null ? null : medicine.getContents()));
+            item.setSubstitutes(valueOrFallback(
+                    dto.getSubstitutes(),
+                    medicine == null ? null : medicine.getSymptoms()));
+            item.setExpiryDate(medicine == null ? null : medicine.getExpiryDate());
 
             billItemRepository.save(item);
 
-            medicine.setQuantity(
-                    medicine.getQuantity()
-                    - dto.getQuantity());
-
-            medicineRepository.save(medicine);
+            if (medicine != null) {
+                medicine.setQuantity(
+                        medicine.getQuantity() - dto.getQuantity());
+                medicineRepository.save(medicine);
+            }
 
             subTotal += amount;
         }
@@ -182,5 +220,11 @@ public class BillingService {
    
     public List<Bill> searchBills(String customer, String type) {
         return billRepository.searchBills(customer, type);
+    }
+
+    private String valueOrFallback(String preferred, String fallback) {
+        return preferred == null
+                ? fallback
+                : preferred;
     }
 }

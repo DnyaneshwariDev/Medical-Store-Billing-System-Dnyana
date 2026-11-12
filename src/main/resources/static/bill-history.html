@@ -106,7 +106,7 @@ padding:10px;
 border:1px solid #ddd;
 }
 .view-btn{
-    background:#28a745;
+    background:#0f4c81;
     color:white;
     border:none;
     padding:6px 12px;
@@ -115,7 +115,7 @@ border:1px solid #ddd;
 }
 
 .view-btn:hover{
-    background:#218838;
+    background:#0b3d68;
 }
 
 .delete-btn{
@@ -223,6 +223,8 @@ border:1px solid #ddd;
 }
 </style>
 
+<link rel="stylesheet" href="/app-popups.css">
+<script src="/app-popups.js"></script>
 </head>
 
 <body>
@@ -231,7 +233,7 @@ border:1px solid #ddd;
 <img src="/images/logo.jpeg" class="logo">
 
 Bill History
-<button class="close-btn" onclick="window.parent.closeModal()">
+<button class="close-btn" onclick="window.location.href='dashboard.html'">
         ✖ Close
     </button>
 </div>
@@ -316,7 +318,7 @@ data.forEach(b => {
 	<td>
 	${b.billType == "Credit"
 	    ? "<span style='color:red;font-weight:bold;'>Credit</span>"
-	    : "<span style='color:green;font-weight:bold;'>Cash</span>"}
+	    : "<span style='color:#0f4c81;font-weight:bold;'>Cash</span>"}
 	</td>
 
 	<td>₹${b.subTotal}</td>
@@ -376,14 +378,15 @@ let bill = data.bill;
 let rows = "";
 
 data.items.forEach(item=>{
+	const medicine = item.medicine || {};
 	rows+=`
 
 	<tr>
 
-	<td>${item.medicine.medicineName}</td>
+	<td>${item.medicineName || medicine.medicineName || ""}</td>
 
-	<td>${item.medicine.batchNo}</td>
-	<td>${item.medicine.scheduleType}</td>
+	<td>${item.batchNo || medicine.batchNo || ""}</td>
+	<td>${item.scheduleType || medicine.scheduleType || ""}</td>
 
 	<td>${item.quantity}</td>
 
@@ -455,7 +458,8 @@ data.items.forEach(item=>{
 	}
 function deleteBill(id){
 
-    if(confirm("Delete this bill?")){
+    appPopups.confirm("Delete this bill?").then(confirmed => {
+        if (!confirmed) return;
 
         fetch("/api/bills/" + id,{
 
@@ -463,15 +467,20 @@ function deleteBill(id){
 
         })
 
-        .then(()=>{
+        .then(res=>{
+            if(!res.ok){
+                throw new Error("Bill could not be deleted");
+            }
 
-            alert("Bill Deleted");
+            appPopups.alert("Bill Deleted").then(() => location.reload());
 
-            location.reload();
-
+        })
+        .catch(error=>{
+            console.error("Bill Delete Error:", error);
+            appPopups.alert("Bill delete failed");
         });
 
-    }
+    });
 
 }
 function loadBills(){

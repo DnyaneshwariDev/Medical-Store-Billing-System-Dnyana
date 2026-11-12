@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
 
 import java.time.LocalDate;
 
@@ -35,10 +36,16 @@ public class BillItem {
 
     private Double amount;
     private String medicineName;
+    private String companyName;
     private String batchNo;
     private String scheduleType;
     private String unit;
     private Double mrp;
+    private Double gstPercent;
+    @Column(length = 1000)
+    private String contents;
+    @Column(length = 2000)
+    private String substitutes;
     private LocalDate expiryDate;
 
 	public String getMedicineName() {
@@ -47,6 +54,14 @@ public class BillItem {
 
 	public void setMedicineName(String medicineName) {
 		this.medicineName = medicineName;
+	}
+
+	public String getCompanyName() {
+		return companyName;
+	}
+
+	public void setCompanyName(String companyName) {
+		this.companyName = companyName;
 	}
 
 	public String getBatchNo() {
@@ -79,6 +94,30 @@ public class BillItem {
 
 	public void setMrp(Double mrp) {
 		this.mrp = mrp;
+	}
+
+	public Double getGstPercent() {
+		return gstPercent;
+	}
+
+	public void setGstPercent(Double gstPercent) {
+		this.gstPercent = gstPercent;
+	}
+
+	public String getContents() {
+		return contents;
+	}
+
+	public void setContents(String contents) {
+		this.contents = contents;
+	}
+
+	public String getSubstitutes() {
+		return substitutes;
+	}
+
+	public void setSubstitutes(String substitutes) {
+		this.substitutes = substitutes;
 	}
 
 	public LocalDate getExpiryDate() {

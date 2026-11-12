@@ -19,7 +19,7 @@ body{
     font-size:22px;
 }
 .header{
-background:#198754;
+background:linear-gradient(135deg,#0f4c81,#2196f3);
 color:white;
 padding:20px;
 font-size:28px;
@@ -201,7 +201,7 @@ textarea{
 
 .save-btn{
 
-    background:#198754;
+    background:#0f4c81;
     color:#fff;
     border:none;
     padding:12px 40px;
@@ -215,7 +215,7 @@ textarea{
 
 .save-btn:hover{
 
-    background:#157347;
+    background:#0b3d68;
 
 }
 
@@ -369,6 +369,8 @@ color:white;
 }
 </style>
 
+<link rel="stylesheet" href="/app-popups.css">
+<script src="/app-popups.js"></script>
 </head>
 
 <body>
@@ -1069,20 +1071,27 @@ function editMedicine(id){
 }
 function deleteMedicine(id){
 
-	if(confirm("Delete Medicine ?")){
+	appPopups.confirm("Delete Medicine ?").then(confirmed => {
+		if (!confirmed) return;
 
 	fetch("/api/medicines/"+id,{
 
 	method:"DELETE"
 
 	})
-	.then(()=>{
-
-	loadMedicines();
-
+	.then(res=>{
+		if(!res.ok){
+			throw new Error("Medicine could not be deleted");
+		}
+		alert("Medicine deleted successfully");
+		loadMedicines();
+	})
+	.catch(error=>{
+		console.error("Medicine Delete Error:", error);
+		alert("Medicine delete failed");
 	});
 
-	}
+	});
 
 }
 function closeModal(){
@@ -1094,7 +1103,11 @@ function closeModal(){
 }
 function closePage(){
 
-    parent.closeModal();
+    if (window.parent !== window && typeof window.parent.closeModal === "function") {
+        window.parent.closeModal();
+    } else {
+        window.location.href = "dashboard.html";
+    }
 
 }
 function searchMedicine(){

@@ -12,7 +12,7 @@ padding:20px;
 background:#f4f6f9;
 }
 .header{
-background:#198754;
+background:linear-gradient(135deg,#0f4c81,#2196f3);
 color:white;
 padding:20px;
 font-size:28px;
@@ -172,7 +172,11 @@ document.getElementById(
 });
 function closePage(){
 
-    parent.closeModal();
+    if (window.parent !== window && typeof window.parent.closeModal === "function") {
+        window.parent.closeModal();
+    } else {
+        window.location.href = "dashboard.html";
+    }
 
 }
 </script>

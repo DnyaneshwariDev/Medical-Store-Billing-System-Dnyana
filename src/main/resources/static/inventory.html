@@ -110,7 +110,7 @@ body{
 }
 
 .btn-success{
-    background:#198754;
+    background:#0f4c81;
 }
 
 .table-container{
@@ -215,7 +215,7 @@ body{
 
 .h1{
 
-    border-top:5px solid #198754;
+    border-top:5px solid #0f4c81;
 
 }
 
@@ -346,7 +346,11 @@ function loadExpiringSoon(){
 	}
 function closePage(){
 
-    parent.closeModal();
+    if (window.parent !== window && typeof window.parent.closeModal === "function") {
+        window.parent.closeModal();
+    } else {
+        window.location.href = "dashboard.html";
+    }
 
 }
 function loadSchedule(type){

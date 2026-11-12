@@ -12,6 +12,21 @@ font-family:Arial;
 background:#eef3f8;
 margin:0;
 }
+*{
+    scrollbar-width:thin;
+    scrollbar-color:#94a3b8 transparent;
+}
+*::-webkit-scrollbar{
+    width:6px;
+    height:6px;
+}
+*::-webkit-scrollbar-thumb{
+    background:#94a3b8;
+    border-radius:999px;
+}
+*::-webkit-scrollbar-thumb:hover{
+    background:#64748b;
+}
 .navbar{
 background:linear-gradient(135deg,#0f4c81,#2196f3);
 color:white;
@@ -23,9 +38,10 @@ font-weight:bold;
 box-shadow:0 2px 10px rgba(0,0,0,.2);
 }
 .header{
-background:#198754;
+background:linear-gradient(135deg,#0f4c81,#2196f3);
 color:white;
-padding:24px;
+min-height:76px;
+padding:10px 24px;
 font-size:28px;
 font-weight:bold;
 box-shadow:0 2px 10px rgba(0,0,0,.2);
@@ -33,6 +49,7 @@ box-shadow:0 2px 10px rgba(0,0,0,.2);
     justify-content:center;
     align-items:center;
      position:relative;
+     box-sizing:border-box;
 }
 .close-btn{
 
@@ -71,8 +88,9 @@ box-shadow:0 2px 10px rgba(0,0,0,.2);
  position:absolute;
    left:20px;
 
-   height:60px;
-    width:170px;
+   height:48px;
+    width:140px;
+    object-fit:contain;
     border-radius: 15px;  
     margin-left:10px;
         
@@ -101,11 +119,18 @@ box-shadow:0 2px 10px rgba(0,0,0,.2);
     flex-direction:column;
 }
 .table-container{
-    height:250px;
-    overflow-y:auto;
+    max-height:360px;
+    overflow:auto;
+}
+.table-container:focus-visible{
+    outline:2px solid #0f4c81;
+    outline-offset:2px;
 }
 .table-container table{
     width:100%;
+}
+.table-container #billTable{
+    min-width:1120px;
 }
 .modal{
     display:none;
@@ -127,14 +152,13 @@ box-shadow:0 2px 10px rgba(0,0,0,.2);
 }
 .card{
     background:#fff;
-    padding:15px;
+    padding:16px 20px;
     border-radius:10px;
     box-shadow:0 2px 8px rgba(0,0,0,.15);
-    margin-bottom:15px;
+    margin-bottom:12px;
 }
 
-.invoice-row,
-.medicine-row{
+.invoice-row{
 
     display:flex;
 
@@ -202,33 +226,7 @@ box-shadow:0 2px 10px rgba(0,0,0,.2);
     width:110px;
 }
 
-.medicine-field{
-    position:relative;
-}
-
-#medicineSearch{
-    width:260px;
-     height:23px;
-     
-}
-
-#quantity{
-    width:120px;
-         height:23px;
-    
-}
-
-.button-field .btn{
-
-    width:140px;
-
-    height:38px;
-
-    margin-top:22px;
-}
-
-#customerDropdown,
-#medicineDropdown{
+#customerDropdown{
 
     position:absolute;
 
@@ -249,6 +247,115 @@ box-shadow:0 2px 10px rgba(0,0,0,.2);
     display:none;
 
     z-index:9999;
+}
+.medicine-suggestions-table{
+    width:100%;
+    min-width:1180px;
+    margin:0;
+    border-collapse:collapse;
+    font-size:13px;
+}
+.medicine-suggestions-table th{
+    position:sticky;
+    top:0;
+    z-index:1;
+    padding:9px 10px;
+    color:#fff;
+    background:linear-gradient(135deg,#0f4c81,#2196f3);
+    text-align:left;
+    white-space:nowrap;
+}
+.medicine-suggestions-table td{
+    padding:8px 10px;
+    border-bottom:1px solid #e5e7eb;
+    text-align:left;
+}
+.medicine-suggestions-table tbody tr{
+    cursor:pointer;
+}
+.medicine-suggestions-table tbody tr:hover{
+    background:#eff6ff;
+    color:#0f4c81;
+}
+.medicine-suggestions-table tbody tr.keyboard-active{
+    background:#d6ecff;
+    color:#0f4c81;
+}
+.bill-row-actions{
+    white-space:nowrap;
+}
+
+.bill-edit-input{
+    width:100%;
+    min-width:75px;
+    box-sizing:border-box;
+    padding:6px 7px;
+    border:1px solid #cbd5e1;
+    border-radius:5px;
+    font:inherit;
+}
+
+.bill-edit-input:focus{
+    border-color:#2196f3;
+    outline:2px solid rgba(33,150,243,.16);
+}
+
+:focus-visible{
+    outline:3px solid #2196f3;
+    outline-offset:2px;
+}
+
+.bill-edit-input--medicine{
+    min-width:160px;
+}
+
+.bill-row-medicine-editor{
+    position:relative;
+    min-width:190px;
+}
+
+.bill-row-medicine-dropdown{
+    position:fixed;
+    top:0;
+    left:0;
+    z-index:10000;
+    display:none;
+    width:min(1200px, calc(100vw - 24px));
+    max-height:320px;
+    overflow:auto;
+    border:1px solid #cbd5e1;
+    border-radius:6px;
+    background:#fff;
+    box-shadow:0 10px 24px rgba(15,23,42,.2);
+}
+
+.bill-row-action{
+    display:inline-grid;
+    width:30px;
+    height:30px;
+    place-items:center;
+    margin:0 2px;
+    padding:0;
+    border:0;
+    border-radius:50%;
+    color:#fff;
+    background:#0f4c81;
+    font-size:20px;
+    line-height:1;
+    cursor:pointer;
+}
+
+.bill-row-action:hover{
+    background:#2196f3;
+}
+
+.bill-row-action--remove{
+    background:#dc3545;
+    font-size:18px;
+}
+
+.bill-row-action--remove:hover{
+    background:#bb2d3b;
 }
 .medicine-info{
     padding:5px;
@@ -286,8 +393,16 @@ border-collapse:collapse;
 margin-top:20px;
 }
 
+.stock-info-table{
+    margin-top:0;
+}
+
+.stock-info-table td{
+    border:none;
+}
+
 th{
-background:#198754;
+background:linear-gradient(135deg,#0f4c81,#2196f3);
 color:white;
 padding:8px;
 }
@@ -297,6 +412,32 @@ border:1px solid #ddd;
 padding:6px;
 text-align:center;
 }
+
+#billTable th{
+    background:#3498db;
+    color:white;
+    padding:4px 8px;
+    text-align:center;
+    font-size:13px;
+}
+
+#billTable th:nth-child(10){
+    font-size:13px;
+}
+
+#billTable td{
+    padding:10px;
+    border-bottom:1px solid #ddd;
+}
+
+#billTable tbody tr:nth-child(even){
+    background:#f8f9fa;
+}
+
+#billTable tbody tr:hover{
+    background:#d6ecff;
+}
+
 /* ===== TOTAL BOX ===== */
 
 .total-box{
@@ -306,15 +447,11 @@ text-align:center;
     align-items:center;
     gap:20px;
 
-    background:#ffffff;
+    background:transparent;
 
-    padding:15px 20px;
+    padding:12px 0;
 
-    margin-top:20px;
-
-    border-radius:10px;
-
-    box-shadow:0 3px 10px rgba(0,0,0,.15);
+    margin-top:8px;
 
     flex-wrap:wrap;
 
@@ -324,9 +461,11 @@ text-align:center;
 
     font-weight:bold;
 
-    color:#0f4c81;
+    color:#000;
 
-    font-size:15px;
+    font-family:Arial,sans-serif;
+
+    font-size:16px;
 
 }
 
@@ -335,6 +474,8 @@ text-align:center;
     width:90px;
 
     height:38px;
+
+    color:#000;
 
     border:1px solid #ccc;
 
@@ -364,6 +505,8 @@ text-align:center;
 
     height:38px;
 
+    color:#000;
+
     border:1px solid #ccc;
 
     border-radius:8px;
@@ -390,7 +533,7 @@ text-align:center;
 
     padding:10px 18px;
 
-    background:#0f4c81;
+    background:linear-gradient(135deg,#0f4c81,#2196f3);
 
     color:#fff;
 
@@ -404,30 +547,30 @@ text-align:center;
 
 /* ===== ACTION BUTTONS ===== */
 
+.billing-layout{
+    max-width:1600px;
+    margin:0 auto;
+    padding:12px 16px 20px;
+}
+
+.billing-main{
+    min-width:0;
+}
+
+.billing-main > .card > h3{
+    margin-top:0;
+    margin-bottom:8px;
+}
+
+.table-container #billTable{
+    margin-top:0;
+}
+
 .action-buttons{
-
-    position:sticky;
-
-    bottom:0;
-
     display:flex;
-
-    justify-content:flex-end;
-
-    gap:15px;
-
-    background:#ffffff;
-
-    padding:15px 20px;
-
-    margin-top:15px;
-
-    border-top:2px solid #ddd;
-
-    box-shadow:0 -2px 10px rgba(0,0,0,.15);
-
-    z-index:100;
-
+    flex-direction:row;
+    gap:8px;
+    margin:0;
 }
 
 .btn{
@@ -452,7 +595,7 @@ text-align:center;
 
 .btn:first-child{
 
-    background:#198754;
+    background:#0f4c81;
 
     color:#fff;
 
@@ -460,7 +603,7 @@ text-align:center;
 
 .btn:last-child{
 
- background:#198754;
+ background:#0f4c81;
     color:#fff;
 
 }
@@ -533,16 +676,78 @@ border:1px dashed black;
 }
 .action-buttons{
     display:flex;
-    justify-content:center;
-    gap:10px;
-    margin-top:5px;
+    flex-direction:row;
+    gap:8px;
+    margin:0;
 }
 
 .action-buttons button{
-    width:90px;
-    height:30px;
-    font-size:13px;
-    padding:5px 10px;
+    width:80px;
+    min-width:80px;
+    height:38px;
+    font-size:14px;
+    padding:8px;
+}
+
+#billingActions .btn{
+    display:inline-flex;
+    width:auto;
+    min-width:112px;
+    height:42px;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:6px 18px;
+    border:2px solid transparent;
+    border-radius:999px;
+    font-size:15px;
+}
+
+#billingActions .btn svg{
+    width:20px;
+    height:20px;
+    fill:none;
+    stroke:currentColor;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    stroke-width:2;
+}
+
+#billingActions .action-button--view{
+    color:#fff;
+    background:linear-gradient(135deg,#0f4c81,#2196f3);
+}
+
+#billingActions .action-button--view:hover{
+    background:linear-gradient(135deg,#0b3c68,#167bd0);
+}
+
+#billingActions .action-button--print{
+    color:#fff;
+    background:linear-gradient(135deg,#0f4c81,#2196f3);
+}
+
+#billingActions .action-button--print:hover{
+    background:linear-gradient(135deg,#0b3c68,#167bd0);
+}
+
+.action-buttons[hidden]{
+    display:none !important;
+}
+.total-primary{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.total-primary > span,
+.total-primary > span span{
+    font-size:20px;
+}
+
+.total-box input{
+    font-family:Arial,sans-serif;
+    font-size:16px;
 }
 #pageFrame{
     width:100%;
@@ -572,13 +777,13 @@ border:1px dashed black;
 }
 .invoice-row{
     display:flex;
-    align-items:center;
+    align-items:flex-end;
     gap:12px;
-    flex-wrap:nowrap;
+    flex-wrap:wrap;
 }
 
 .invoice-row label{
-margin-left:10px;
+    margin-left:0;
     font-weight:bold;
     white-space:nowrap;
 }
@@ -586,7 +791,8 @@ margin-left:10px;
 .invoice-row input,
 .invoice-row select{
     width:180px;
-    height:15px;
+    height:38px;
+    box-sizing:border-box;
 }
 #billType{
 
@@ -594,25 +800,6 @@ margin-left:10px;
     height:36px;
     font-size:14px;
     
-}
-.medicine-row{
-    display:flex;
-    align-items:center;
-    gap:15px;
-    margin-top:1px;
-}
-
-.medicine-row label{
-    font-weight:bold;
-    white-space:nowrap;
-}
-
-#medicineSearch{
-    width:220px;
-}
-
-#quantity{
-    width:120px;
 }
 .customer-section{
     display:flex;
@@ -627,8 +814,9 @@ margin-left:10px;
 
 #customerSearch{
     width:100%;
-    height:24px;
-    padding:5px;
+    height:38px;
+    padding:6px 10px;
+    box-sizing:border-box;
 }
 
 #customerDropdown{
@@ -723,14 +911,78 @@ margin-left:10px;
 
 .schedule-otc{
 
-    background:#e8f5e9;
+    background:#eaf3ff;
 
-    color:#2e7d32;
+    color:#0f4c81;
 
-    border:1px solid #2e7d32;
+    border:1px solid #0f4c81;
 
 }
+
+@media (max-width:900px){
+    .header{
+        justify-content:flex-start;
+        padding:10px 110px 10px 150px;
+        font-size:22px;
+    }
+
+    .logo{
+        left:16px;
+        width:120px;
+    }
+
+    .invoice-row{
+        align-items:flex-end;
+        gap:12px;
+    }
+
+    .total-box{
+        justify-content:flex-start;
+        padding:14px;
+    }
+}
+
+@media (max-width:560px){
+    .header{
+        min-height:68px;
+        padding:10px 92px 10px 112px;
+        font-size:18px;
+    }
+
+    .logo{
+        left:10px;
+        width:92px;
+        height:40px;
+    }
+
+    .close-btn{
+        right:10px;
+        padding:8px 10px;
+        font-size:13px;
+    }
+
+    .billing-layout{
+        padding:8px;
+    }
+
+    .card{
+        padding:14px;
+    }
+
+    #customerSearch{
+        width:100%;
+    }
+
+    .total-box,
+    .total-primary{
+        align-items:flex-start;
+        flex-direction:column;
+        gap:12px;
+    }
+}
 </style>
+<link rel="stylesheet" href="/app-popups.css">
+<script src="/app-popups.js"></script>
 </head>
 
 <body>
@@ -743,6 +995,8 @@ margin-left:10px;
     </button>
 </div>
 
+<div class="billing-layout">
+<main class="billing-main">
 <div class="card">
 
 <h3>Invoice Details</h3>
@@ -789,63 +1043,23 @@ margin-left:10px;
 
 </div>
 
-<div class="card">
-
-<h3>Add Medicine</h3>
-
-<div class="medicine-row">
-
-    <div class="field medicine-field">
-
-        <label><b>Medicine :</b></label>
-
-        <input type="text"
-               id="medicineSearch"
-               placeholder="Search Medicine"
-               onkeyup="filterMedicines(event)">
-
-        <div id="medicineDropdown"></div>
-
-    </div>
-
-    <div class="field">
-
-        <label><b>Quantity :</b></label>
-
-        <input type="number"
-               id="quantity"
-               placeholder="Quantity">
-
-    </div>
-
-    <div class="field button-field">
-
-        <button id="addItemBtn" class="btn" onclick="addMedicine()">
-            Add Item
-        </button>
-        </div>
-           <div class="field">
-
-    
-
-</div>
-
-</div>
-<div class="table-container">
+<div class="table-container" tabindex="0" aria-label="Bill items table. Use arrow keys to scroll.">
     <table id="billTable">
 
 <thead>
 
 <tr>
 <th>Sr No:</th>
-<th>Product</th>
+<th>Medicine</th>
+<th>Manufacturer</th>
 <th>Schedule</th>
-<th>Batch no</th>
+<th>Batch No</th>
 <th>GST %</th>
 <th>Qty</th>
 <th>Unit</th>
 <th>Rate</th>
 <th>Total Amount</th>
+<th>Action</th>
 </tr>
 
 </thead>
@@ -856,38 +1070,18 @@ margin-left:10px;
 
 </table>
 </div>
-<table>
-
-<thead>
-
+<table class="stock-info-table">
+<tbody>
 <tr>
-<td><b>Stock :</b>
-<span id="stockInfo">0</span>
-</td>
-
-<td><b>Margin :</b>
-<span id="marginInfo">0</span> %
-</td>
+<td><b>Stock :</b> <span id="stockInfo">0</span></td>
+<td><b>Margin :</b> <span id="marginInfo">0</span> %</td>
 </tr>
 <tr>
-<td><b>MRP :</b>
-₹<span id="mrpInfo">0</span>
-</td>
-
-<td><b>Purchase Price :</b>
-₹<span id="purchasePriceInfo">0</span>
-</td>
+<td><b>MRP :</b> ₹<span id="mrpInfo">0</span></td>
+<td><b>Purchase Price :</b> ₹<span id="purchasePriceInfo">0</span></td>
 </tr>
-
-</thead>
-
-<tbody id="info">
-
 </tbody>
-
 </table>
-
-
 <div class="medicine-info">
 
     
@@ -917,11 +1111,23 @@ placeholder="Doctor Name">
 
 <div class="total-box">
 
+<div id="billingActions" class="action-buttons" aria-label="Billing actions" hidden>
+    <button class="btn action-button--view" onclick="generateBill()">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        View
+    </button>
+    <button id="printBtn" class="btn action-button--print" onclick="printtBill()">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z"></path><path d="M18 12h.01"></path></svg>
+        Print
+    </button>
+</div>
+
+<div class="total-primary">
 <span>
 Total Amount :
 ₹ <span id="subTotal">0</span>
 </span>
-
+</div>
 
 <span>
 Discount :
@@ -956,18 +1162,7 @@ value="0" readonly>
 </span>
 
 </div>
-<div class="action-buttons">
-
-<button id="printBtn" class="btn" 
-onclick="printtBill()">
-Print
-</button>  
-  <button class="btn"
-onclick="generateBill()">
-View
-</button>
-</div>
-
+</main>
 
 </div>
 <script>
@@ -980,6 +1175,26 @@ loadMedicines();
 
 let customers = [];
 
+const customerDropdown =
+    document.getElementById("customerDropdown");
+
+customerDropdown.addEventListener("click", function(e){
+
+    let option =
+        e.target.closest("div[data-id]");
+
+    if(!option || !customerDropdown.contains(option))
+        return;
+
+    selectCustomer(
+        option.dataset.id,
+        option.dataset.name
+    );
+
+    customerIndex = -1;
+
+});
+
 function loadCustomers(){
 
 fetch("/api/customers")
@@ -987,6 +1202,10 @@ fetch("/api/customers")
 .then(data => {
 
     customers = data;
+
+    if(document.getElementById("customerSearch").value.trim()){
+        filterCustomers();
+    }
 
 });
 }
@@ -1015,27 +1234,26 @@ function filterCustomers(event){
         return;
 
     }
-	let html = "";
+	dropdown.innerHTML = "";
 
 	customers
 	.filter(c =>
-	c.customerName.toLowerCase().includes(search)
+	String(c.customerName || "").toLowerCase().includes(search)
 	)
 	.forEach(c => {
 
-		html += `
-			<div onclick="selectCustomer(${c.id}, '${c.customerName}')"
-			     style="padding:8px;cursor:pointer;">
-			     ${c.customerName}
-			</div>
-			`;
+		let option = document.createElement("div");
+		option.dataset.id = c.id;
+		option.dataset.name = c.customerName || "";
+		option.textContent = c.customerName || "";
+		option.style.padding = "8px";
+		option.style.cursor = "pointer";
+		dropdown.appendChild(option);
 
 	});
 
-	dropdown.innerHTML = html;
-
 	dropdown.style.display =
-	html ? "block" : "none";
+	dropdown.childElementCount ? "block" : "none";
 	}
 function selectCustomer(id, name){
 
@@ -1045,259 +1263,396 @@ function selectCustomer(id, name){
 
     document.getElementById("customerDropdown").style.display = "none";
 }function loadMedicines(){
-	let options = "";
-
-	medicines.forEach(m => {
-	    options += `
-	    <option value="${m.medicineName}">
-	    `;
-	});
-
 	fetch("/api/medicines")
 	.then(res => res.json())
 	.then(data => {
 
 	    medicines = data;
 
-	    let html = "";
-
-	    data.forEach(m => {
-
-	        html += `
-	        <div onclick="selectMedicine('${m.medicineName}')"
-	             style="padding:8px;cursor:pointer;">
-	            ${m.medicineName}
-	        </div>
-	        `;
-	    });
-
-	    document.getElementById("medicineDropdown").innerHTML = html;
-
 	});
 
 }
-function filterMedicines(event){
-	 if(event &&
-		      (event.key==="ArrowUp" ||
-		       event.key==="ArrowDown" ||
-		       event.key==="Enter" ||
-		       event.key==="Escape")){
-		        return;
-		    }
-	let search =
-	document.getElementById("medicineSearch")
-	.value.toLowerCase();
 
-	let dropdown =
-	document.getElementById("medicineDropdown");
+function createMedicineSuggestionsTable(matchingMedicines){
+	const table = document.createElement("table");
+	table.className = "medicine-suggestions-table";
+	const thead = document.createElement("thead");
+	thead.innerHTML = "<tr><th>Medicine</th><th>Manufacturer</th><th>Available Qty</th><th>Schedule</th><th>Contents</th><th>Substitutes</th></tr>";
+	const tbody = document.createElement("tbody");
 
-	let html = "";
-
-	medicines
-	.filter(m =>
-	m.medicineName.toLowerCase().includes(search)
-	)
-	.forEach(m => {
-
-		html += `
-			<div onclick="selectMedicine('${m.medicineName}')"
-			     style="padding:8px;cursor:pointer;
-			            display:flex;
-			            justify-content:space-between;
-			            align-items:center;">
-
-			    <span>${m.medicineName}</span>
-
-			    <span style="
-			        font-size:12px;
-			        color:white;
-			        background:${m.scheduleType === 'OTC' ? '#28a745' : '#dc3545'};
-			        padding:2px 8px;
-			        border-radius:12px;">
-			        ${m.scheduleType}
-			    </span>
-
-			</div>
-			`;
-
+	matchingMedicines.forEach(medicine => {
+		const row = document.createElement("tr");
+		row.dataset.medicineId = medicine.id;
+		[
+			medicine.medicineName || "",
+			medicine.companyName || "Not specified",
+			medicine.quantity ?? 0,
+			medicine.scheduleType || "Not specified",
+			medicine.contents || "Not specified",
+			medicine.symptoms || "Not specified"
+		].forEach(value => {
+			const cell = document.createElement("td");
+			cell.textContent = value;
+			row.appendChild(cell);
+		});
+		tbody.appendChild(row);
 	});
 
-	dropdown.innerHTML = html;
-
-	dropdown.style.display =
-	html ? "block" : "none";
-
-	}
-function selectMedicine(name){
-	
-
-	document.getElementById("medicineSearch").value =
-	name;
-
-	document.getElementById("medicineDropdown").style.display =
-	"none";
-	// Schedule
-	 
-
-	}
-function addMedicine(){
-	let medicineName =
-		document.getElementById("medicineSearch").value;
-
-		let medicine =
-		medicines.find(
-		m => m.medicineName === medicineName
-		);
-
-		if(!medicine){
-		    alert("Select valid medicine");
-		    return;
-		}
-
-		
-let qty =
-	parseInt(document.getElementById("quantity").value);
-
-	
-document.getElementById("stockInfo").innerText =
-	medicine.quantity || 0;
-	document.getElementById("mrpInfo").innerText =
-	medicine.mrp || 0;
-
-	document.getElementById("purchasePriceInfo").innerText =
-	medicine.purchasePrice || 0;
-
-	document.getElementById("marginInfo").innerText =
-	medicine.marginPercent || 0;
-
-	document.getElementById("contentsInfo").innerText =
-	medicine.contents || "-";
-
-	document.getElementById("symptomsInfo").innerText =
-	medicine.symptoms || "-";
-	
-//STOCK CHECK
-
-if(medicine.quantity <= 0){
-
-    alert("❌ Out Of Stock");
-
-    return;
+	table.append(thead, tbody);
+	return table;
 }
 
-// EXPIRY CHECK
-let today = new Date();
-
-let expiryDate =
-new Date(medicine.expiryDate);
-
-if(expiryDate < today){
-
-alert(
-"❌ Medicine Expired. Billing Not Allowed"
-);
-
-return;
-}
-let amount =
-medicine.mrp * qty;
-if(qty > medicine.quantity){
-
-    alert(
-    "❌ Available Stock : " +
-    medicine.quantity
-    );
-
-    return;
-}
-
-billItems.push({
-
-medicineId: medicine.id,
-medicineName: medicine.medicineName,
-scheduleType: medicine.scheduleType,
-batchNo: medicine.batchNo,
-
-quantity: qty,
-unit: medicine.unit,
-unitPrice: medicine.mrp,
-gst: medicine.gstPercent,   // Add this line
-amount: amount
-
-
-});
-
-renderTable();
-calculateTotal();
+function updateMedicineReferenceDetails(medicine){
+	document.getElementById("stockInfo").innerText = medicine.quantity ?? 0;
+	document.getElementById("marginInfo").innerText = medicine.marginPercent ?? 0;
+	document.getElementById("mrpInfo").innerText = medicine.mrp ?? 0;
+	document.getElementById("purchasePriceInfo").innerText = medicine.purchasePrice ?? 0;
+	document.getElementById("contentsInfo").innerText = medicine.contents || "-";
+	document.getElementById("symptomsInfo").innerText = medicine.symptoms || medicine.substitutes || "-";
 }
 
 function renderTable(){
 
-let html="";
-let subtotal=0;
+const body = document.getElementById("billBody");
+body.replaceChildren();
 
 billItems.forEach((item,index)=>{
+	const row = document.createElement("tr");
+	row.dataset.index = index;
+	row.addEventListener("click", function(event){
+		if(event.target.closest("button")) return;
+		const item = billItems[index];
+		const medicine = item.medicineId
+			? medicines.find(entry => String(entry.id) === String(item.medicineId))
+			: null;
+		updateMedicineReferenceDetails(medicine || item);
+	});
 
-subtotal += item.amount;
+	const numberCell = document.createElement("td");
+	numberCell.textContent = index + 1;
+	row.appendChild(numberCell);
 
-html += `
-<tr>
+	[
+		["companyName", "text", "Manufacturer", ""],
+		["scheduleType", "text", "Schedule", ""],
+		["batchNo", "text", "Batch number", ""],
+		["gst", "number", "GST percentage", ""],
+		["quantity", "number", "Quantity", ""],
+		["unit", "text", "Unit", ""],
+		["unitPrice", "number", "Rate", ""]
+	].forEach(([field,type,label,extraClass])=>{
+		const cell = document.createElement("td");
+		const input = document.createElement("input");
+		input.type = type;
+		input.className = "bill-edit-input " + extraClass;
+		input.value = item[field] ?? "";
+		input.dataset.field = field;
+		input.dataset.index = index;
+		input.setAttribute("aria-label", label);
+		if(type === "number"){
+			input.min = "0";
+			input.step = field === "quantity" ? "1" : "0.01";
+		}
+		input.addEventListener("input", function(){
+			calculateRow(this);
+		});
+		cell.appendChild(input);
+		row.appendChild(cell);
+	});
 
-<td>${index+1}</td>
+	const medicineCell = document.createElement("td");
+	const medicineEditor = document.createElement("div");
+	medicineEditor.className = "bill-row-medicine-editor";
+	const medicineInput = document.createElement("input");
+	medicineInput.type = "text";
+	medicineInput.className = "bill-edit-input bill-edit-input--medicine";
+	medicineInput.value = item.medicineName || "";
+	medicineInput.dataset.field = "medicineName";
+	medicineInput.dataset.index = index;
+	medicineInput.setAttribute("aria-label", "Medicine");
+	medicineInput.autocomplete = "off";
+	const rowDropdown = document.createElement("div");
+	rowDropdown.className = "bill-row-medicine-dropdown";
+	rowDropdown.setAttribute("aria-label", "Matching medicines");
+	medicineInput.addEventListener("keydown", function(event){
+		const options = rowDropdown.querySelectorAll("tr[data-medicine-id]");
+		const activeIndex = Number(rowDropdown.dataset.activeIndex ?? -1);
 
-<td>${item.medicineName}</td>
-<td>${item.scheduleType}</td>
-<td>${item.batchNo}</td>
-<td>${item.gst}%</td>
+		if((event.key === "ArrowDown" || event.key === "ArrowUp")
+				&& rowDropdown.style.display !== "none"
+				&& options.length){
+			event.preventDefault();
+			const direction = event.key === "ArrowDown" ? 1 : -1;
+			const nextIndex = (activeIndex + direction + options.length) % options.length;
+			rowDropdown.dataset.activeIndex = nextIndex;
+			options.forEach((option, optionIndex) => {
+				option.classList.toggle("keyboard-active", optionIndex === nextIndex);
+			});
+			options[nextIndex].scrollIntoView({block:"nearest"});
+			return;
+		}
 
+		if(event.key === "Enter"
+				&& rowDropdown.style.display !== "none"
+				&& options[activeIndex]){
+			event.preventDefault();
+				selectMedicineForBillRow(
+					index,
+					options[activeIndex].dataset.medicineId,
+					true
+				);
+			return;
+		}
 
+		if(event.key === "Escape"){
+			rowDropdown.style.display = "none";
+			rowDropdown.dataset.activeIndex = "-1";
+		}
+	});
 
-<td>
-<input type="number"
-value="${item.quantity}"
-	oninput="calculateRow(this)">
-</td>
-<td>${item.unit}</td>
+	medicineInput.addEventListener("input", function(){
+		calculateRow(this);
+		openRowMedicineSuggestions(medicineEditor, rowDropdown, medicineInput.value);
+	});
+	medicineInput.addEventListener("click", function(){
+		openRowMedicineSuggestions(medicineEditor, rowDropdown, medicineInput.value);
+	});
+	rowDropdown.addEventListener("click", function(event){
+		const option = event.target.closest("tr[data-medicine-id]");
+		if(!option || !rowDropdown.contains(option)) return;
+		selectMedicineForBillRow(index, option.dataset.medicineId);
+	});
 
-<td>
-<input type="number"
-value="${item.unitPrice}"
-	oninput="calculateRow(this)">
-</td>
+	medicineEditor.append(medicineInput, rowDropdown);
+	medicineCell.appendChild(medicineEditor);
+	row.insertBefore(medicineCell, row.cells[1]);
 
-<td class="amount">
-${item.amount}
-</td>
-<td>
-<button onclick="removeItem(${index})">
-X
-</button>
-</td>
+	const amountCell = document.createElement("td");
+	amountCell.className = "amount bill-line-amount";
+	amountCell.textContent = Number(item.amount || 0).toFixed(2);
+	row.appendChild(amountCell);
 
-</tr>
-`;
+	const actionsCell = document.createElement("td");
+	actionsCell.className = "bill-row-actions";
+	const addButton = document.createElement("button");
+	addButton.type = "button";
+	addButton.className = "bill-row-action";
+	addButton.setAttribute("aria-label", "Add another bill item");
+	addButton.title = "Add another bill item";
+	addButton.textContent = "+";
+	addButton.addEventListener("click", function(){
+		startNextBillItem();
+	});
 
+	const removeButton = document.createElement("button");
+	removeButton.type = "button";
+	removeButton.className = "bill-row-action bill-row-action--remove";
+	removeButton.setAttribute("aria-label", "Remove medicine");
+	removeButton.title = "Remove medicine";
+	removeButton.textContent = "\u00d7";
+	removeButton.addEventListener("click", function(){
+		removeItem(index);
+	});
+
+	actionsCell.append(addButton, removeButton);
+	row.appendChild(actionsCell);
+	body.appendChild(row);
 });
 
-document.getElementById("billBody").innerHTML = html;
-
-document.getElementById("subTotal").innerText = subtotal;
+updateBillSubtotal();
+document.getElementById("billingActions").hidden = !billItems.some(isBillItemReady);
 
 calculateTotal();
+}
 
+function isBillItemReady(item){
+	return Boolean(item.medicineName.trim())
+		&& Number.isInteger(Number(item.quantity))
+		&& Number(item.quantity) > 0
+		&& item.unitPrice !== null
+		&& item.unitPrice !== ""
+		&& Number.isFinite(Number(item.unitPrice))
+		&& Number(item.unitPrice) >= 0;
+}
+
+function openRowMedicineSuggestions(editor, dropdown, searchText){
+	document.querySelectorAll(".bill-row-medicine-dropdown").forEach(openDropdown => {
+		if(openDropdown !== dropdown){
+			openDropdown.style.display = "none";
+		}
+	});
+
+	renderRowMedicineSuggestions(dropdown, searchText);
+	if(!dropdown.childElementCount){
+		dropdown.style.display = "none";
+		return;
+	}
+
+	const editorRect = editor.getBoundingClientRect();
+	const viewportPadding = 12;
+	const dropdownWidth = Math.min(1200, window.innerWidth - viewportPadding * 2);
+	const dropdownHeight = Math.min(320, window.innerHeight - viewportPadding * 2);
+	const availableBelow = window.innerHeight - editorRect.bottom - viewportPadding;
+	const placeBelow = availableBelow >= Math.min(160, dropdownHeight);
+
+	dropdown.style.display = "block";
+	dropdown.style.width = dropdownWidth + "px";
+	dropdown.style.maxHeight = Math.max(
+		120,
+		Math.min(dropdownHeight, placeBelow ? availableBelow : editorRect.top - viewportPadding)
+	) + "px";
+	dropdown.style.left = Math.max(
+		viewportPadding,
+		Math.min(editorRect.left, window.innerWidth - dropdownWidth - viewportPadding)
+	) + "px";
+	dropdown.style.top = (placeBelow
+		? editorRect.bottom + 4
+		: Math.max(viewportPadding, editorRect.top - dropdown.offsetHeight - 4)
+	) + "px";
+}
+
+function renderRowMedicineSuggestions(dropdown, searchText){
+	const search = String(searchText || "").trim().toLowerCase();
+	dropdown.replaceChildren();
+	dropdown.dataset.activeIndex = "-1";
+
+	const matchingMedicines = medicines.filter(m =>
+		!search || [
+			m.medicineName,
+			m.companyName,
+			m.contents,
+			m.symptoms
+		].some(value => String(value || "").toLowerCase().includes(search))
+	);
+	if(!matchingMedicines.length) return;
+
+	dropdown.appendChild(createMedicineSuggestionsTable(matchingMedicines));
+}
+
+function selectMedicineForBillRow(index, medicineId, focusNextRow = false){
+	const medicine = medicines.find(item => String(item.id) === String(medicineId));
+	const billItem = billItems[index];
+	if(!medicine || !billItem) return;
+
+	const existingQuantity = Number(billItem.quantity);
+	billItem.medicineId = medicine.id;
+	billItem.inventoryMedicineName = medicine.medicineName;
+	billItem.medicineName = medicine.medicineName || "";
+	billItem.companyName = medicine.companyName || "";
+	billItem.scheduleType = medicine.scheduleType || "";
+	billItem.batchNo = medicine.batchNo || "";
+	billItem.contents = medicine.contents || "";
+	billItem.substitutes = medicine.symptoms || "";
+	billItem.unit = medicine.unit || "";
+	billItem.unitPrice = Number(medicine.mrp) || 0;
+	billItem.gst = Number(medicine.gstPercent) || 0;
+	billItem.quantity = Number.isInteger(existingQuantity) && existingQuantity > 0
+		? existingQuantity
+		: 1;
+	billItem.amount = billItem.quantity * billItem.unitPrice;
+
+	updateMedicineReferenceDetails(medicine);
+
+	renderTable();
+	if(focusNextRow){
+		let nextIndex = billItems.findIndex(
+			(item, itemIndex) => itemIndex > index && !item.medicineName.trim()
+		);
+		if(nextIndex < 0){
+			startNextBillItem("", "", false);
+			nextIndex = billItems.length - 1;
+		}
+		const nextMedicineInput = document.querySelector(
+			"#billBody tr[data-index='" + nextIndex + "'] input[data-field='medicineName']"
+		);
+		if(nextMedicineInput) nextMedicineInput.focus();
+	}
+}
+
+function updateBillSubtotal(){
+	const subtotal = billItems.reduce((sum,item)=>sum + (Number(item.amount) || 0),0);
+	document.getElementById("subTotal").innerText = subtotal.toFixed(2);
 }
 
 function removeItem(index){
 
 billItems.splice(index,1);
 
-renderTable();
+if(billItems.length === 0){
+	startNextBillItem("", "", false);
+}else{
+	renderTable();
+}
 
+}
+
+function startNextBillItem(medicineName = "", quantity = "", shouldFocus = true){
+	billItems.push({
+		medicineId: null,
+		inventoryMedicineName: null,
+		medicineName: medicineName || "",
+		companyName: "",
+		scheduleType: "",
+		batchNo: "",
+		contents: "",
+		substitutes: "",
+		quantity: quantity ?? "",
+		unit: "",
+		unitPrice: null,
+		gst: 0,
+		amount: 0
+	});
+	renderTable();
+	if(shouldFocus){
+		const firstInput = document.querySelector("#billBody tr:last-child input[data-field='medicineName']");
+		firstInput.focus();
+	}
+}
+
+for(let row = 0; row < 4; row++){
+	startNextBillItem("", "", false);
 }
 
 
 
 function generateBill(){
+	billItems = billItems.filter(item => item.medicineName.trim());
+	renderTable();
+
+	if(billItems.length === 0){
+		startNextBillItem("", "", false);
+		appPopups.warning(
+			"Add a Medicine",
+			"Add at least one medicine before generating a bill."
+		);
+		return;
+	}
+
+	const invalidItemIndex = billItems.findIndex(item =>
+		!item.medicineName.trim()
+		|| !Number.isInteger(Number(item.quantity))
+		|| Number(item.quantity) <= 0
+		|| item.unitPrice === null
+		|| item.unitPrice === ""
+		|| !Number.isFinite(Number(item.unitPrice))
+		|| Number(item.unitPrice) < 0
+	);
+	if(invalidItemIndex >= 0){
+		appPopups.warning(
+			"Complete Bill Item",
+			"Enter a medicine name, valid quantity, and rate for every row before generating the bill."
+		);
+		const incompleteRow = document.querySelector(
+			"#billBody tr[data-index='" + invalidItemIndex + "']"
+		);
+		const emptyField = incompleteRow.querySelector(
+			"input[data-field='medicineName'], input[data-field='quantity'], input[data-field='unitPrice']"
+		);
+		emptyField.focus();
+		return;
+	}
+
+	const receiptWindow = window.open("", "_blank", "width=900,height=700");
 	let customerId =
 		document.getElementById("customerId").value;
 
@@ -1306,10 +1661,17 @@ let medicinesPayload=[];
 billItems.forEach(item=>{
 
 medicinesPayload.push({
-
-medicineId:item.medicineId,
-quantity:item.quantity
-
+	medicineId: item.medicineId || null,
+	medicineName: item.medicineName.trim(),
+	companyName: item.companyName,
+	batchNo: item.batchNo,
+	scheduleType: item.scheduleType,
+	unit: item.unit,
+	contents: item.contents || "",
+	substitutes: item.substitutes || "",
+	gstPercent: Number(item.gst) || 0,
+	unitPrice: Number(item.unitPrice),
+	quantity: Number(item.quantity)
 });
 
 });
@@ -1340,6 +1702,8 @@ medicines: medicinesPayload
 
 };
 
+let savedBill = null;
+
 fetch("/api/bills",{
 
 method:"POST",
@@ -1352,9 +1716,15 @@ body:JSON.stringify(billRequest)
 
 })
 
-.then(res=>res.json())
+.then(async res=>{
+	if(!res.ok){
+		throw new Error(await res.text() || "Bill could not be saved");
+	}
+	return res.json();
+})
 
 .then(data=>{
+	savedBill = data;
 	document.getElementById("invoiceNo").value = data.invoiceNo;
 
 	let discountPercent =
@@ -1375,7 +1745,7 @@ body:JSON.stringify(billRequest)
 
 		<p><b>Date :</b> ${data.billDate.substring(0,10)}</p>
 
-		<p><b>Customer :</b> ${data.customer.customerName}</p>
+		<p><b>Customer :</b> ${data.customer ? data.customer.customerName : (billRequest.customerName || "Walk-in customer")}</p>
 
 		<p><b>Doctor :</b> ${data.doctorName}</p>
 
@@ -1384,7 +1754,9 @@ body:JSON.stringify(billRequest)
 		<table>
 
 		<tr>
-		<th>Product</th>
+		<th>Medicine</th>
+		<th>Manufacturer</th>
+		<th>Schedule</th>
 		<th>Batch</th>
 		<th>Qty</th>
 		<th>Unit</th>
@@ -1394,6 +1766,8 @@ body:JSON.stringify(billRequest)
 		${billItems.map(item => `
 		<tr>
 		<td>${item.medicineName}</td>
+		<td>${item.companyName || ""}</td>
+		<td>${item.scheduleType || ""}</td>
 		<td>${item.batchNo}</td>
 		<td>${item.quantity}</td>
 		<td>${item.unit}</td>
@@ -1416,9 +1790,15 @@ body:JSON.stringify(billRequest)
 		<p><b>Balance :</b> ₹ ${(netAmount - data.paidAmount).toFixed(2)}</p>
 
 		`;
-	let win = window.open("","_blank","width=900,height=700");
+	if(!receiptWindow){
+		appPopups.info(
+			"Bill Saved Successfully",
+			"Bill #" + data.id + " has been saved. Allow pop-ups to view the receipt."
+		);
+		return;
+	}
 
-	win.document.write(`
+	receiptWindow.document.write(`
 			<html>
 			<head>
 			<title>Medical Bill</title>
@@ -1493,8 +1873,30 @@ body:JSON.stringify(billRequest)
 			</body>
 			</html>
 			`);
-	win.document.close();
+	receiptWindow.document.close();
 
+	appPopups.success(
+		"Bill Generated Successfully",
+		"Bill #" + data.id + " has been saved successfully."
+	);
+
+	})
+	.catch(error => {
+		console.error("Bill Generation Error:", error);
+		if(receiptWindow && !receiptWindow.closed){
+			receiptWindow.close();
+		}
+		if(savedBill){
+			appPopups.info(
+				"Bill Saved Successfully",
+				"Bill #" + savedBill.id + " has been saved, but the receipt preview could not be opened."
+			);
+		}else{
+			appPopups.error(
+				"Unable to Generate Bill",
+				"Bill could not be saved. Check your connection and try again."
+			);
+		}
 	});
 
 }
@@ -1585,7 +1987,9 @@ body:JSON.stringify(billRequest)
 		<table>
 
 		<tr>
-		<th>Product</th>
+		<th>Medicine</th>
+		<th>Manufacturer</th>
+		<th>Schedule</th>
 		<th>Batch</th>
 		<th>Qty</th>
 		<th>Unit</th>
@@ -1595,6 +1999,8 @@ body:JSON.stringify(billRequest)
 		${billItems.map(item => `
 		<tr>
 		<td>${item.medicineName}</td>
+		<td>${item.companyName || ""}</td>
+		<td>${item.scheduleType || ""}</td>
 		<td>${item.batchNo}</td>
 		<td>${item.quantity}</td>
 		<td>${item.unit}</td>
@@ -1739,26 +2145,30 @@ window.onload = function () {
 }
 
 function calculateRow(element){
+	const row = element.closest("tr");
+	const index = Number(element.dataset.index);
+	const field = element.dataset.field;
+	const item = billItems[index];
+	if(!row || !item || !field) return;
 
-    let row = element.parentElement.parentElement;
+	const numericFields = ["gst", "quantity", "unitPrice"];
+	item[field] = numericFields.includes(field)
+		? element.value === "" ? null : Number(element.value)
+		: element.value;
 
-    let qty = Number(row.cells[4].querySelector("input").value);
+	if(field === "medicineName"
+			&& item.medicineId
+			&& item.medicineName.trim() !== item.inventoryMedicineName){
+		item.medicineId = null;
+	}
 
-    let rate = Number(row.cells[6].querySelector("input").value);
-
-    let amount = qty * rate;
-
-    row.cells[8].innerHTML = amount.toFixed(2);
-    // billItems array update
-    let index = row.rowIndex - 1;
-
-    billItems[index].quantity = qty;
-    billItems[index].unitPrice = rate;
-    billItems[index].amount = amount;
-
-    // Table total refresh
-    calculateBillTotal();
-    }
+	const quantity = Number(item.quantity) || 0;
+	const rate = Number(item.unitPrice) || 0;
+	item.amount = quantity * rate;
+	row.querySelector(".bill-line-amount").textContent = item.amount.toFixed(2);
+	document.getElementById("billingActions").hidden = !billItems.some(isBillItemReady);
+	calculateBillTotal();
+}
 /* ENTER = NEXT FIELD */
 
 
@@ -1810,19 +2220,16 @@ function calculateTotal(){
 }
 function calculateBillTotal(){
 
-    let subtotal = 0;
-
-    billItems.forEach(item=>{
-        subtotal += item.amount;
-    });
-
-    document.getElementById("subTotal").innerText = subtotal.toFixed(2);
-
+	updateBillSubtotal();
     calculateTotal();
 }
 function closePage(){
 
-    parent.closeModal();
+    if (window.parent !== window && typeof window.parent.closeModal === "function") {
+        window.parent.closeModal();
+    } else {
+        window.location.href = "dashboard.html";
+    }
 
 }
 function printBill(){
@@ -1839,9 +2246,6 @@ const controls = [
    "billDate",
    "customerSearch",
    "billType",
-   "medicineSearch",
-   "quantity",
-   "addItemBtn",
    "doctorName",
    "discount",
    "paidAmount",
@@ -1852,7 +2256,7 @@ function focusField(id){
 
    let el = document.getElementById(id);
 
-   if(!el) return;
+   if(!el || el.closest("[hidden]")) return;
 
    el.focus();
 
@@ -1862,60 +2266,17 @@ function focusField(id){
 
 }
 
-function nextField(currentId){
-
-   let index = controls.indexOf(currentId);
-
-   if(index < controls.length-1){
-
-       focusField(controls[index+1]);
-
-   }
-
+function focusBillMedicine(){
+	let index = billItems.findIndex(item => !item.medicineName.trim());
+	if(index < 0){
+		startNextBillItem("", "", false);
+		index = billItems.length - 1;
+	}
+	const input = document.querySelector(
+		"#billBody tr[data-index='" + index + "'] input[data-field='medicineName']"
+	);
+	if(input) input.focus();
 }
-
-function previousField(currentId){
-
-   let index = controls.indexOf(currentId);
-
-   if(index>0){
-
-       focusField(controls[index-1]);
-
-   }
-
-}
-
-
-/*==============================
-LEFT & RIGHT ARROW
-==============================*/
-
-document.addEventListener("keydown",function(e){
-
-   let id=document.activeElement.id;
-
-   if(e.key==="ArrowRight"){
-
-       // dropdown open ho to navigation mat karo
-       
-       e.preventDefault();
-
-       nextField(id);
-
-   }
-
-   if(e.key==="ArrowLeft"){
-
-      
-       e.preventDefault();
-
-       previousField(id);
-
-   }
-
-});
-
 
 /*==============================
 INITIAL FOCUS
@@ -2091,7 +2452,7 @@ billType.addEventListener("keydown", function(e){
        // Second Enter -> confirm
        typeOpen = false;
 
-       focusField("medicineSearch");
+       focusBillMedicine();
 
        return;
    }
@@ -2117,159 +2478,7 @@ billType.addEventListener("change",function(){
 
    typeOpen = false;
 
-   focusField("medicineSearch");
-
-});
-/*==========================================
-PART-4 : MEDICINE + QTY + ADD ITEM
-==========================================*/
-
-let medicineIndex = -1;
-
-const medicineInput = document.getElementById("medicineSearch");
-
-medicineInput.addEventListener("keydown",function(e){
-
-   let items=document.querySelectorAll("#medicineDropdown div");
-
-   // DOWN
-   if(e.key==="ArrowDown"){
-
-       if(items.length===0) return;
-
-       e.preventDefault();
-
-       medicineIndex++;
-
-       if(medicineIndex>=items.length)
-           medicineIndex=0;
-
-       items.forEach(x=>{
-           x.style.background="";
-           x.style.color="";
-       });
-
-       items[medicineIndex].style.background="#0d6efd";
-       items[medicineIndex].style.color="white";
-       items[medicineIndex].scrollIntoView({
-    	    behavior:"smooth",
-    	    block:"nearest"
-    	
-    	});
-
-       return;
-   }
-
-   // UP
-   if(e.key==="ArrowUp"){
-
-       if(items.length===0) return;
-
-       e.preventDefault();
-
-       medicineIndex--;
-
-       if(medicineIndex<0)
-           medicineIndex=items.length-1;
-
-       items.forEach(x=>{
-           x.style.background="";
-           x.style.color="";
-       });
-
-       items[medicineIndex].style.background="#0d6efd";
-       items[medicineIndex].style.color="white";
-       items[medicineIndex].scrollIntoView({
-    	    behavior:"smooth",
-    	    block:"nearest"
-    	
-    	});
-
-       return;
-   }
-
-   // ESC
-   if(e.key==="Escape"){
-
-       document.getElementById("medicineDropdown").style.display="none";
-       medicineIndex=-1;
-       return;
-
-   }
-
-   // ENTER
-   if(e.key==="Enter"){
-
-       e.preventDefault();
-
-       // Dropdown item selected
-       if(items.length>0 && medicineIndex>=0){
-
-           items[medicineIndex].click();
-
-       }
-
-       document.getElementById("medicineDropdown").style.display="none";
-
-       medicineIndex=-1;
-
-       focusField("quantity");
-
-   }
-
-});
-
-
-/*==============================
-QUANTITY
-==============================*/
-
-document.getElementById("quantity").addEventListener("keydown",function(e){
-
-   if(e.key!=="Enter") return;
-
-   e.preventDefault();
-
-   focusField("addItemBtn");
-
-});
-
-
-/*==============================
-ADD ITEM
-==============================*/
-
-document.getElementById("addItemBtn").addEventListener("keydown",function(e){
-
-   if(e.key!=="Enter") return;
-
-   e.preventDefault();
-
-   let medicine =
-   document.getElementById("medicineSearch").value.trim();
-
-   // Medicine blank → Doctor
-   if(medicine===""){
-
-       focusField("doctorName");
-       return;
-
-   }
-
-   // Add medicine
-   addMedicine();
-
-   // Clear fields
-   document.getElementById("medicineSearch").value="";
-   document.getElementById("quantity").value="";
-
-   medicineIndex=-1;
-
-   document.getElementById("medicineDropdown").style.display="none";
-
-   // Back to medicine
-   focusField("medicineSearch");
-
+   focusBillMedicine();
 });
 /*==========================================
 PART-5 : DOCTOR → DISCOUNT → PAID → PRINT
@@ -2358,7 +2567,11 @@ document.getElementById("paidAmount").addEventListener("keydown",function(e){
 
    e.preventDefault();
 
-   focusField("printBtn");
+   if(billItems.some(isBillItemReady)){
+       focusField("printBtn");
+   }else{
+       focusBillMedicine();
+   }
 
 });
 
@@ -2376,9 +2589,62 @@ document.getElementById("printBtn").addEventListener("keydown",function(e){
    printtBill();
 
 });
+
+document.addEventListener("keydown", function(event){
+	const tableContainer = document.querySelector(".table-container");
+	if(document.activeElement === tableContainer){
+		const scrollAmount = 40;
+		switch(event.key){
+			case "ArrowUp":
+				tableContainer.scrollTop -= scrollAmount;
+				break;
+			case "ArrowDown":
+				tableContainer.scrollTop += scrollAmount;
+				break;
+			case "ArrowLeft":
+				tableContainer.scrollLeft -= scrollAmount;
+				break;
+			case "ArrowRight":
+				tableContainer.scrollLeft += scrollAmount;
+				break;
+			default:
+				return;
+		}
+		event.preventDefault();
+		return;
+	}
+
+	if((document.activeElement === document.body
+			|| document.activeElement === document.documentElement)
+			&& (event.key === "ArrowLeft" || event.key === "ArrowRight")
+			&& tableContainer.scrollWidth > tableContainer.clientWidth){
+		tableContainer.scrollLeft += event.key === "ArrowRight" ? 40 : -40;
+		event.preventDefault();
+		return;
+	}
+
+	if(event.defaultPrevented
+			|| (event.key !== "ArrowDown" && event.key !== "ArrowUp")) return;
+
+	const focusable = Array.from(document.querySelectorAll(
+		'input:not([type="hidden"]), select, textarea, button, a[href], [tabindex]:not([tabindex="-1"])'
+	)).filter(element =>
+		!element.disabled
+		&& !element.closest("[hidden], [aria-hidden='true']")
+		&& element.getClientRects().length > 0
+		&& getComputedStyle(element).visibility !== "hidden"
+	);
+	const currentIndex = focusable.indexOf(document.activeElement);
+	if(currentIndex < 0) return;
+
+	const nextIndex = currentIndex + (event.key === "ArrowDown" ? 1 : -1);
+	if(nextIndex < 0 || nextIndex >= focusable.length) return;
+
+	event.preventDefault();
+	focusable[nextIndex].focus();
+});
 </script>
 
 
 </body>
 </html>
-

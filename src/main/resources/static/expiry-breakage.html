@@ -194,7 +194,7 @@ select:focus{
 
     padding:0 30px;
 
-    background:#198754;
+    background:#0f4c81;
 
     color:white;
 
@@ -214,7 +214,7 @@ select:focus{
 
 .btn:hover{
 
-    background:#146c43;
+    background:#0b3d68;
 
 }
 #medicineDropdown div{
@@ -230,6 +230,8 @@ select:focus{
 }
 
 </style>
+<link rel="stylesheet" href="/app-popups.css">
+<script src="/app-popups.js"></script>
 </head>
 
 <body>
@@ -731,9 +733,7 @@ function saveEntry(){
     })
     .then(msg => {
 
-        alert("Saved Successfully");
-
-        location.reload();
+        appPopups.alert("Saved Successfully").then(() => location.reload());
 
     })
     .catch(error => {
@@ -940,7 +940,11 @@ window.onload = function(){
 
 function closePage(){
 
-    parent.closeModal();
+    if (window.parent !== window && typeof window.parent.closeModal === "function") {
+        window.parent.closeModal();
+    } else {
+        window.location.href = "dashboard.html";
+    }
 
 }
 

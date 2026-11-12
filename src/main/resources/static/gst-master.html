@@ -138,7 +138,7 @@ body{
     width:100%;
     height:45px;
     border:none;
-    background:#198754;
+    background:#0f4c81;
     color:#fff;
     border-radius:8px;
     cursor:pointer;
@@ -148,7 +148,7 @@ body{
 }
 
 .save-btn:hover{
-    background:#157347;
+    background:#0b3d68;
 }
 
 /* ===========================
@@ -327,6 +327,8 @@ tbody tr:hover{
 }
 
 </style>
+<link rel="stylesheet" href="/app-popups.css">
+<script src="/app-popups.js"></script>
 </head>
 
 <body>
@@ -1121,11 +1123,8 @@ function saveGST(){
 }
 function deleteGST(id){
 
-	if(!confirm("Delete this GST Record?")){
-
-	return;
-
-	}
+	appPopups.confirm("Delete this GST Record?").then(confirmed => {
+		if (!confirmed) return;
 
 	fetch("/api/gst-master/"+id,{
 
@@ -1133,14 +1132,22 @@ function deleteGST(id){
 
 	})
 
-	.then(()=>{
+	.then(res=>{
+		if(!res.ok){
+			throw new Error("GST record could not be deleted");
+		}
 
 	alert("GST Deleted Successfully");
 
 	loadGST();
 
+	})
+	.catch(err=>{
+		console.error("GST Delete Error:", err);
+		alert("GST delete failed");
 	});
 
+	});
 	}
 /* ==========================================
 SEARCH GST
@@ -1484,7 +1491,11 @@ CLOSE PAGE
 DEFAULT FOCUS
 ------------------------------*/
 function closePage(){
-    parent.closeModal();
+    if (window.parent !== window && typeof window.parent.closeModal === "function") {
+        window.parent.closeModal();
+    } else {
+        window.location.href = "dashboard.html";
+    }
 }
 
 </script>

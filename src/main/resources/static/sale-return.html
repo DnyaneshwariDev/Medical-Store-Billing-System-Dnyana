@@ -169,7 +169,7 @@ table{
 
 th{
 
-    background:#198754;
+    background:#0f4c81;
 
     color:white;
 
@@ -240,7 +240,7 @@ td{
 
 .save{
 
-    background:#198754;
+    background:#0f4c81;
 
     color:white;
 
@@ -293,6 +293,8 @@ td{
 </style>
 
 
+<link rel="stylesheet" href="/app-popups.css">
+<script src="/app-popups.js"></script>
 </head>
 
 
@@ -1314,6 +1316,7 @@ function loadBillItems(){
                             data-rate="${unitPrice}"
                             data-qty="${quantity}"
                             value="0"
+                            ${medicineId ? "" : 'disabled title="This bill-only item does not change inventory."'}
                             oninput="calculateReturn()"
                         >
 
@@ -1722,11 +1725,7 @@ function saveReturn(){
 
     .then(data => {
 
-        alert(
-            "Sale Return Saved"
-        );
-
-        location.reload();
+        appPopups.alert("Sale Return Saved").then(() => location.reload());
 
     })
 
@@ -1975,14 +1974,10 @@ document.addEventListener(
 
 function closePage(){
 
-    if(
-        window.parent &&
-        typeof window.parent.closeModal ===
-        "function"
-    ){
-
+    if (window.parent !== window && typeof window.parent.closeModal === "function") {
         window.parent.closeModal();
-
+    } else {
+        window.location.href = "dashboard.html";
     }
 
 }
