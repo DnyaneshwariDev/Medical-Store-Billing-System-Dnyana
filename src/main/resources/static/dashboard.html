@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="stylesheet" href="/table-scroll.css">
+<link rel="stylesheet" href="/common-loader.css?v=3">
+<script src="/table-scroll.js" defer></script>
 <link rel="preconnect"
 href="https://fonts.googleapis.com">
 
@@ -218,7 +221,6 @@ padding:20px;
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
 gap:15px;
-
 margin-bottom:10px;
 }
 
@@ -471,6 +473,7 @@ transform:translateX(-100%);
     padding:20px;
     position:relative;
 }
+
 </style>
 
 </head>
@@ -717,45 +720,53 @@ Wholesaler / Company
 
 <div class="card">
 <h3>Total Medicines</h3>
-<h2 id="medicines">0</h2>
+<h2 id="medicines">—</h2>
+<div id="medicinesState" class="dashboard-state" role="status" aria-live="polite"></div>
 </div>
 
 <div class="card">
 <h3>Total Customers</h3>
-<h2 id="customers">0</h2>
+<h2 id="customers">—</h2>
+<div id="customersState" class="dashboard-state" role="status" aria-live="polite"></div>
 </div>
 
 
 <div class="card">
 <h3>Out Of Stock</h3>
-<h2 id="outOfStock">0</h2>
+<h2 id="outOfStock">—</h2>
+<div id="outOfStockState" class="dashboard-state" role="status" aria-live="polite"></div>
 </div>
 
 
 <div class="card">
 <h3>Total Suppliers</h3>
-<h2 id="suppliers">0</h2>
+<h2 id="suppliers">—</h2>
+<div id="suppliersState" class="dashboard-state" role="status" aria-live="polite"></div>
 </div>
 
 <div class="card">
 <h3>Today's Bills</h3>
-<h2 id="bills">0</h2>
+<h2 id="bills">—</h2>
+<div id="billsState" class="dashboard-state" role="status" aria-live="polite"></div>
 </div>
 
 
 <div class="card">
     <h3>Today's Sales</h3>
-    <h2 id="todaySales">0</h2>
+    <h2 id="todaySales">—</h2>
+    <div id="todaySalesState" class="dashboard-state" role="status" aria-live="polite"></div>
 </div>
 
 <div class="card">
     <h3>Today's Purchase</h3>
-    <h2 id="todayPurchase">0</h2>
+    <h2 id="todayPurchase">—</h2>
+    <div id="todayPurchaseState" class="dashboard-state" role="status" aria-live="polite"></div>
 </div>
 
 <div class="card">
     <h3>Today's Profit</h3>
-    <h2 id="todayProfit">0</h2>
+    <h2 id="todayProfit">—</h2>
+    <div id="todayProfitState" class="dashboard-state" role="status" aria-live="polite"></div>
 </div>
 
 </div>
@@ -767,6 +778,7 @@ Wholesaler / Company
     <div class="alert-title">
         🔴 Low Stock Medicines
     </div>
+    <div id="lowStockAlertsState" class="dashboard-state" role="status" aria-live="polite"></div>
 
     <div class="marquee"  onclick="showLowStockMedicines()">
 
@@ -783,6 +795,7 @@ Wholesaler / Company
     <div class="alert-title" onclick="showExpiringMedicines()">
         🟠 Expiring Medicines
     </div>
+    <div id="expiringAlertsState" class="dashboard-state" role="status" aria-live="polite"></div>
 
     <div class="marquee">
 
@@ -793,6 +806,7 @@ Wholesaler / Company
     </div>
 
 </div>
+
 <!-- GRAPHS -->
 
 <div class="graph-grid">
@@ -801,15 +815,15 @@ Wholesaler / Company
 
 <h2>Monthly Sales Graph</h2>
 
-<canvas id="salesChart"></canvas>
-
+<div id="salesChartState" class="dashboard-state dashboard-chart-state" role="status" aria-live="polite"></div>
+<canvas id="salesChart" hidden></canvas>
 </div>
 <div class="graph-card">
 
 <h2>Top Selling Medicines</h2>
 
-<canvas id="medicineChart"></canvas>
-
+<div id="topMedicinesChartState" class="dashboard-state dashboard-chart-state" role="status" aria-live="polite"></div>
+<canvas id="medicineChart" hidden></canvas>
 </div>
 
 
@@ -821,15 +835,15 @@ Wholesaler / Company
 
 <h2>Inventory Status</h2>
 
-<canvas id="inventoryChart"></canvas>
-
+<div id="inventoryChartState" class="dashboard-state dashboard-chart-state" role="status" aria-live="polite"></div>
+<canvas id="inventoryChart" hidden></canvas>
 </div>
 <div class="graph-card">
 
 <h2>Monthly Purchase Graph</h2>
 
-<canvas id="purchaseChart"></canvas>
-
+<div id="purchaseChartState" class="dashboard-state dashboard-chart-state" role="status" aria-live="polite"></div>
+<canvas id="purchaseChart" hidden></canvas>
 </div>
 
 
@@ -841,6 +855,7 @@ Wholesaler / Company
 
 <h2>Recent Purchases</h2>
 
+<div id="recentPurchasesState" class="dashboard-state" role="status" aria-live="polite"></div>
 <table>
 
 <thead>
@@ -871,6 +886,7 @@ View Full Purchase History
 
 <h2>Recent Bills</h2>
 
+<div id="recentBillsState" class="dashboard-state" role="status" aria-live="polite"></div>
 <table>
 
 <thead>
@@ -923,306 +939,247 @@ View Full Bill History
     </div>
 
 </div>
+<script src="/common-loader.js?v=3"></script>
 <script>
-let dashboardAlerts = {};
+let dashboardAlerts = {lowStock: [], expiring: []};
 window.onload = function() {
-
-    loadMedicineAlerts();
-    
 
         document
             .getElementById("transactionBtn")
             .focus();
-
-    
-
-
 };
-/* EXISTING API */
 
-fetch("/api/dashboard/stast")
-.then(response => response.json())
-.then(data => {
+function fetchDashboardJson(url){
+    return fetch(url).then(response=>{
+        if(!response.ok){
+            throw new Error(`Dashboard request failed (${response.status}): ${url}`);
+        }
+        return response.json();
+    });
+}
 
-document.getElementById("medicines").innerText =
-data.totalMedicines;
+function renderDashboardChart(canvasId, config){
+    const canvas = document.getElementById(canvasId);
+    canvas.hidden = false;
+    try{
+        const existingChart = Chart.getChart(canvas);
+        if(existingChart){
+            existingChart.destroy();
+        }
+        new Chart(canvas, config);
+    }catch(error){
+        canvas.hidden = true;
+        throw error;
+    }
+}
 
-document.getElementById("customers").innerText =
-data.totalCustomers;
+function loadDashboardSummary(){
+    return fetchDashboardJson("/api/dashboard/stast").then(data=>{
+        document.getElementById("medicines").innerText = data.totalMedicines;
+        document.getElementById("customers").innerText = data.totalCustomers;
+        document.getElementById("outOfStock").innerText = data.outOfStock;
+        document.getElementById("suppliers").innerText = data.totalSuppliers;
+        document.getElementById("bills").innerText = data.totalBills;
+        document.getElementById("todaySales").innerText = "₹" + data.todaySales;
+        document.getElementById("todayPurchase").innerText = "₹" + data.todayPurchase;
+        document.getElementById("todayProfit").innerText = "₹" + data.todayProfit;
+    });
+}
 
-
-document.getElementById("outOfStock").innerText =
-data.outOfStock;
-
-
-document.getElementById("suppliers").innerText =
-	data.totalSuppliers;
-
-	document.getElementById("bills").innerText =
-	data.totalBills;
-
-	
-	document.getElementById("todaySales").innerText =
-		"₹" + data.todaySales;
-
-		document.getElementById("todayPurchase").innerText =
-		"₹" + data.todayPurchase;
-
-		document.getElementById("todayProfit").innerText =
-		"₹" + data.todayProfit;
-
-});
-/*alerts*/
- 
- function loadMedicineAlerts(){
-
-fetch("/api/dashboard/alerts")
-
-.then(res=>res.json())
-
-.then(data=>{
-	dashboardAlerts = data;
-let low="";
-
-data.lowStock.forEach(m=>{
-
-low +=
-`🔴 ${m.medicineName}
+function loadMedicineAlerts(){
+    return fetchDashboardJson("/api/dashboard/alerts").then(data=>{
+        const lowStock = data && Array.isArray(data.lowStock) ? data.lowStock : [];
+        const expiring = data && Array.isArray(data.expiring) ? data.expiring : [];
+        dashboardAlerts = {lowStock, expiring};
+        let low = "";
+        lowStock.forEach(m=>{
+            low += `🔴 ${m.medicineName}
 (Stock : ${m.quantity})
 &nbsp;&nbsp;&nbsp;&nbsp;`;
+        });
+        document.getElementById("lowStockBanner").innerHTML = low;
 
-});
-
-document.getElementById("lowStockBanner")
-.innerHTML = low;
-
-
-
-let exp="";
-
-data.expiring.forEach(m=>{
-
-exp +=
-`🟠 ${m.medicineName}
+        let exp = "";
+        expiring.forEach(m=>{
+            exp += `🟠 ${m.medicineName}
 (Expiry : ${m.expiryDate})
 &nbsp;&nbsp;&nbsp;&nbsp;`;
-
-});
-
-document.getElementById("expiryBanner")
-.innerHTML = exp;
-
-});
-
+        })
+        document.getElementById("expiryBanner").innerHTML = exp;
+    });
 }
-/* SALES GRAPH */
-fetch("/api/dashboard/sales")
-.then(res=>res.json())
-.then(data=>{
 
-new Chart(
-document.getElementById('salesChart'),
-{
-type:'line',
-data:{
-labels:[
-'Jan','Feb','Mar','Apr',
-'May','Jun','Jul','Aug',
-'Sep','Oct','Nov','Dec'
-],
-datasets:[{
-label:'Sales',
-data:data,
-borderWidth:3,
-fill:false
-}]
+function loadSalesGraph(){
+    return fetchDashboardJson("/api/dashboard/sales").then(data=>{
+        renderDashboardChart("salesChart", {
+            type:'line',
+            data:{
+                labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+                datasets:[{label:'Sales', data:data, borderWidth:3, fill:false}]
+            }
+        });
+    });
 }
-});
 
-});
-
-/* PURCHASE GRAPH */
-fetch("/api/dashboard/purchase")
-.then(res=>res.json())
-.then(data=>{
-
-new Chart(
-document.getElementById('purchaseChart'),
-{
-type:'bar',
-data:{
-labels:[
-'Jan','Feb','Mar','Apr',
-'May','Jun','Jul','Aug',
-'Sep','Oct','Nov','Dec'
-],
-datasets:[{
-label:'Purchase',
-data:data
-}]
+function loadPurchaseGraph(){
+    return fetchDashboardJson("/api/dashboard/purchase").then(data=>{
+        renderDashboardChart("purchaseChart", {
+            type:'bar',
+            data:{
+                labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+                datasets:[{label:'Purchase', data:data}]
+            }
+        });
+    });
 }
-});
 
-});
-
-
-/* INVENTORY GRAPH */
-fetch("/api/dashboard/inventory")
-.then(res => res.json())
-.then(data => {
-
-new Chart(
-document.getElementById('inventoryChart'),
-{
-type:'pie',
-data:{
-labels:[
-'Available',
-'Low Stock',
-'Out Of Stock'
-],
-datasets:[{
-data:[
-data.available,
-data.lowStock,
-data.outOfStock
-]
-}]
-},
-options:{
-responsive:true,
-maintainAspectRatio:false
+function loadInventoryGraph(){
+    return fetchDashboardJson("/api/dashboard/inventory").then(data=>{
+        renderDashboardChart("inventoryChart", {
+            type:'pie',
+            data:{
+                labels:['Available','Low Stock','Out Of Stock'],
+                datasets:[{data:[data.available, data.lowStock, data.outOfStock]}]
+            },
+            options:{responsive:true, maintainAspectRatio:false}
+        });
+    });
 }
-});
 
-});
-
-
-/* TOP MEDICINES */
-fetch("/api/dashboard/top-medicines")
-.then(res=>res.json())
-.then(data=>{
-
-new Chart(
-document.getElementById('medicineChart'),
-{
-type:'doughnut',
-data:{
-labels:data.labels,
-datasets:[{
-data:data.data
-}]
-},
-options:{
-responsive:true,
-maintainAspectRatio:false,
-plugins:{
-legend:{
-position:'bottom'
+function loadTopMedicines(){
+    return fetchDashboardJson("/api/dashboard/top-medicines").then(data=>{
+        renderDashboardChart("medicineChart", {
+            type:'doughnut',
+            data:{
+                labels:data.labels,
+                datasets:[{data:data.data}]
+            },
+            options:{
+                responsive:true,
+                maintainAspectRatio:false,
+                plugins:{legend:{position:'bottom'}}
+            }
+        });
+    });
 }
-}
-}
-});
 
-});
-
-/* RECENT PURCHASES */
-
-fetch("/api/purchases")
-.then(res => res.json())
-.then(data => {
-
-let rows = "";
-
-data.slice(-5).reverse().forEach(p => {
-
-rows += `
+function loadRecentPurchases(){
+    return fetchDashboardJson("/api/dashboard/recent-purchases").then(data=>{
+        let rows = "";
+        data.forEach(p=>{
+            rows += `
 <tr>
 <td>${p.invoiceNo}</td>
-<td>${p.supplier ? p.supplier.supplierName : ''}</td>
+<td>${p.supplierName || ''}</td>
 <td>${p.purchaseDate}</td>
 <td>₹${p.totalAmount}</td>
 </tr>
 `;
+        });
+        document.getElementById("purchaseTable").innerHTML = rows;
+    });
+}
 
-});
-
-document.getElementById("purchaseTable").innerHTML = rows;
-
-});
-
-
-/* RECENT BILLS */
-
-fetch("/api/bills")
-.then(res => res.json())
-.then(data => {
-
-let rows = "";
-
-data.slice(-5).reverse().forEach(b => {
-
-rows += `
+function loadRecentBills(){
+    return fetchDashboardJson("/api/dashboard/recent-bills").then(data=>{
+        let rows = "";
+        data.forEach(b=>{
+            rows += `
 <tr>
 <td>${b.id}</td>
-<td>${b.customer ? b.customer.customerName : '-'}</td>
+<td>${b.customerName || '-'}</td>
 <td>${b.billDate ? b.billDate.substring(0,10) : '-'}</td>
 <td>₹${b.totalAmount}</td>
 </tr>
 `;
+        });
+        document.getElementById("billTable").innerHTML = rows;
+    });
+}
 
-});
-
-document.getElementById("billTable").innerHTML = rows;
-
-});
-
-/* LOW STOCK MEDICINES */
-
-fetch("/api/inventory/low-stock")
-.then(res => res.json())
-.then(data => {
-
-let rows = "";
-
-data.forEach(m => {
-
-rows += `
+function loadLowStockMedicines(){
+    return fetchDashboardJson("/api/inventory/low-stock").then(data=>{
+        if(!Array.isArray(data)){
+            throw new Error("Low stock response was invalid");
+        }
+        let rows = "";
+        data.forEach(m=>{
+            rows += `
 <tr>
 <td>${m.medicineName}</td>
 <td>${m.quantity}</td>
 </tr>
 `;
+        });
+        document.getElementById("lowStockMedicineTable").innerHTML = rows;
+    });
+}
 
-});
-
-document.getElementById(
-"lowStockMedicineTable").innerHTML = rows;
-
-});
-/* EXPIRING MEDICINES */
-
-fetch("/api/inventory/expiring-soon")
-.then(res => res.json())
-.then(data => {
-
-let rows = "";
-
-data.forEach(m => {
-
-rows += `
+function loadExpiringMedicines(){
+    return fetchDashboardJson("/api/inventory/expiring-soon").then(data=>{
+        if(!Array.isArray(data)){
+            throw new Error("Expiring medicines response was invalid");
+        }
+        let rows = "";
+        data.forEach(m=>{
+            rows += `
 <tr>
 <td>${m.medicineName}</td>
 <td>${m.expiryDate}</td>
 </tr>
 `;
+        });
+        document.getElementById("expiryMedicineTable").innerHTML = rows;
+    });
+}
 
-});
+function loadDashboardData(){
+    return Promise.all([
+        CommonLoader.runSection([
+            "medicinesState",
+            "customersState",
+            "outOfStockState",
+            "suppliersState",
+            "billsState",
+            "todaySalesState",
+            "todayPurchaseState",
+            "todayProfitState"
+        ], loadDashboardSummary, "Loading summary..."),
+        CommonLoader.runSection([
+            "lowStockAlertsState",
+            "expiringAlertsState"
+        ], loadMedicineAlerts, "Loading alerts..."),
+        CommonLoader.runSection("salesChartState", loadSalesGraph, "Loading sales..."),
+        CommonLoader.runSection(
+            "topMedicinesChartState",
+            loadTopMedicines,
+            "Loading medicines..."
+        ),
+        CommonLoader.runSection(
+            "inventoryChartState",
+            loadInventoryGraph,
+            "Loading inventory..."
+        ),
+        CommonLoader.runSection(
+            "purchaseChartState",
+            loadPurchaseGraph,
+            "Loading purchases..."
+        ),
+        CommonLoader.runSection(
+            "recentPurchasesState",
+            loadRecentPurchases,
+            "Loading purchases..."
+        ),
+        CommonLoader.runSection(
+            "recentBillsState",
+            loadRecentBills,
+            "Loading bills..."
+        )
+    ]);
+}
 
-document.getElementById(
-"expiryMedicineTable").innerHTML = rows;
+loadDashboardData();
 
-});
 function showLowStockMedicines(){
 
 	document.getElementById("modalTitle").innerText =
@@ -1282,6 +1239,9 @@ function closeAlertModal(){
     document.getElementById("alertFrame").src = "";
 }
 function openPage(page){
+    if(page === "purchase-list.html" || page === "bill-history.html"){
+        page += "?v=3";
+    }
     window.location.href = page;
 }
 

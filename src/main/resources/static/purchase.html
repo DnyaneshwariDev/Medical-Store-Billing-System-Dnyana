@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="stylesheet" href="/table-scroll.css">
+<script src="/table-scroll.js" defer></script>
 <meta charset="UTF-8">
 <title>Purchase Entry</title>
 
@@ -428,6 +430,45 @@ th{
 
 }
 
+#medicineDropdown .medicine-pagination{
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    padding:6px 10px;
+    border-top:1px solid #eee;
+    background:white;
+    color:#333;
+    cursor:default;
+    font-size:12px;
+
+}
+
+#medicineDropdown .medicine-pagination:hover{
+
+    background:white;
+    color:#333;
+
+}
+
+#medicineDropdown .medicine-pagination button{
+
+    padding:5px 9px;
+    border:1px solid #ccc;
+    border-radius:4px;
+    background:white;
+    cursor:pointer;
+
+}
+
+#medicineDropdown .medicine-pagination button:disabled{
+
+    opacity:.5;
+    cursor:default;
+
+}
+
 
 /* Medicine scrollbar */
 
@@ -561,7 +602,7 @@ th{
 
     <div class="card">
 
-        <h3>Purchase Information</h3>
+        <h3>Purchase Details</h3>
 
         <div class="form-grid">
 
@@ -581,12 +622,6 @@ th{
 </select>
 <input type="hidden" id="supplierId">
         </div>
-
-    </div>
-
-    <br>
-
-    <div class="card">
 
         <h3>Add Medicine</h3>
 
@@ -622,7 +657,6 @@ th{
             z-index:9999;
          ">
     </div>
-
 </div>
             <label>Quantity :</label>
             <input type="number" id="qty" placeholder="Qty">
@@ -659,7 +693,7 @@ th{
 
 <h3>Purchase Items</h3>
 
-<table>
+<table class="purchase-items-table">
 
 <thead>
 <tr>
@@ -683,6 +717,7 @@ th{
 
 </table>
 
+
 <div class="total-box">
 
 Total : ₹ <span id="totalAmount">0</span>
@@ -691,7 +726,7 @@ Total : ₹ <span id="totalAmount">0</span>
 
 <br>
 
-<button id="saveBtn"  onclick="savePurchase()">
+<button id="saveBtn" onclick="savePurchase()">
 Save Purchase
 </button>
 
@@ -745,27 +780,17 @@ function loadSuppliers(){
 }
 let medicines = [];
 let medicineIndex = -1;
+const MEDICINE_SEARCH_PAGE_SIZE = 20;
+const medicineSearchState = {
+    abortController: null,
+    debounceTimer: null,
+    page: 0,
+    totalPages: 0,
+    query: "",
+    requestId: 0
+};
 
 loadSuppliers();
-loadMedicines();
-
-function loadMedicines(){
-
-    fetch("/api/medicines")
-    .then(res => res.json())
-    .then(data => {
-
-        medicines = data;
-
-    })
-    .catch(error => {
-
-        console.error("Medicine loading error:", error);
-
-    });
-
-}
-
 
 const medicineSearch =
     document.getElementById("medicineSearch");
@@ -776,53 +801,121 @@ const medicineDropdown =
 
 medicineSearch.addEventListener("input", function(){
 
-    let search =
-        this.value.trim().toLowerCase();
-
+    const query = this.value.trim();
     medicineIndex = -1;
-
     document.getElementById("medicineSelect").value = "";
 
+    if(medicineSearchState.debounceTimer){
+        clearTimeout(medicineSearchState.debounceTimer);
+    }
+    if(medicineSearchState.abortController){
+        medicineSearchState.abortController.abort();
+    }
+    medicineSearchState.requestId++;
+    medicineSearchState.query = query;
 
-    if(search === ""){
-
-        medicineDropdown.innerHTML = "";
+    if(query === ""){
+        medicineDropdown.replaceChildren();
         medicineDropdown.style.display = "none";
-
         return;
-
     }
 
-
-    let results = medicines.filter(m => {
-
-        let name = String(m.medicineName || "").toLowerCase();
-
-        return name.includes(search);
-
-    });
-
-    let html = "";
-
-    results.forEach(m => {
-
-        html += `
-        <div
-            data-id="${m.id}"
-            data-name="${m.medicineName}">
-            ${m.medicineName}
-        </div>
-        `;
-
-    });
-
-
-    medicineDropdown.innerHTML = html;
-
-    medicineDropdown.style.display =
-        results.length > 0 ? "block" : "none";
+    medicineDropdown.replaceChildren();
+    const searching = document.createElement("div");
+    searching.textContent = "Searching medicines...";
+    medicineDropdown.appendChild(searching);
+    medicineDropdown.style.display = "block";
+    medicineSearchState.debounceTimer = setTimeout(function(){
+        fetchMedicinePage(query, 0);
+    }, 250);
 
 });
+
+async function fetchMedicinePage(query, page){
+
+    if(medicineSearchState.abortController){
+        medicineSearchState.abortController.abort();
+    }
+    const controller = new AbortController();
+    const requestId = ++medicineSearchState.requestId;
+    medicineSearchState.abortController = controller;
+
+    const url = `/api/medicines/search?q=${encodeURIComponent(query)}&page=${page}&size=${MEDICINE_SEARCH_PAGE_SIZE}`;
+    try{
+        const response = await fetch(url, { signal: controller.signal });
+        if(!response.ok){
+            throw new Error("Medicine search failed");
+        }
+        const data = await response.json();
+
+        if(requestId !== medicineSearchState.requestId ||
+           medicineSearch.value.trim() !== query){
+            return;
+        }
+
+        medicineSearchState.page = data.number;
+        medicineSearchState.totalPages = data.totalPages;
+        medicineSearchState.query = query;
+        medicines = Array.isArray(data.content) ? data.content : [];
+        renderMedicineResults(medicines, query);
+    }catch(error){
+        if(error.name !== "AbortError" &&
+           requestId === medicineSearchState.requestId){
+            console.error("Medicine search error:", error);
+            medicineDropdown.replaceChildren();
+            const message = document.createElement("div");
+            message.textContent = "Medicine search failed. Please try again.";
+            medicineDropdown.appendChild(message);
+            medicineDropdown.style.display = "block";
+        }
+    }
+}
+
+function renderMedicineResults(results, query){
+
+    medicineDropdown.replaceChildren();
+
+    if(results.length === 0){
+        const message = document.createElement("div");
+        message.textContent = `No medicines found for "${query}"`;
+        medicineDropdown.appendChild(message);
+    }else{
+        results.forEach(function(medicine){
+            const option = document.createElement("div");
+            option.dataset.id = medicine.id;
+            option.dataset.name = medicine.medicineName || "";
+            option.textContent = medicine.medicineName || "";
+            medicineDropdown.appendChild(option);
+        });
+    }
+
+    if(medicineSearchState.totalPages > 1){
+        const pagination = document.createElement("div");
+        pagination.className = "medicine-pagination";
+
+        const previous = document.createElement("button");
+        previous.type = "button";
+        previous.dataset.page = medicineSearchState.page - 1;
+        previous.textContent = "Prev";
+        previous.disabled = medicineSearchState.page <= 0;
+
+        const pageInfo = document.createElement("span");
+        pageInfo.textContent =
+            `Page ${medicineSearchState.page + 1} of ${medicineSearchState.totalPages}`;
+
+        const next = document.createElement("button");
+        next.type = "button";
+        next.dataset.page = medicineSearchState.page + 1;
+        next.textContent = "Next";
+        next.disabled =
+            medicineSearchState.page + 1 >= medicineSearchState.totalPages;
+
+        pagination.append(previous, pageInfo, next);
+        medicineDropdown.appendChild(pagination);
+    }
+
+    medicineDropdown.style.display = "block";
+}
 
 
 medicineSearch.addEventListener("keydown", function(e){
@@ -952,6 +1045,16 @@ function selectMedicine(id,name){
 
 
 medicineDropdown.addEventListener("click", function(e){
+
+    let pageButton = e.target.closest("button[data-page]");
+    if(pageButton && !pageButton.disabled){
+        e.preventDefault();
+        fetchMedicinePage(
+            medicineSearchState.query,
+            Number(pageButton.dataset.page)
+        );
+        return;
+    }
 
     let item =
         e.target.closest("div[data-id]");
@@ -1183,9 +1286,33 @@ Delete
 document.getElementById("purchaseTable")
 .innerHTML = rows;
 
+updatePurchaseTableScroll();
+
 document.getElementById("totalAmount")
 .innerText = total;
 
+}
+
+function updatePurchaseTableScroll(){
+    const table = document.querySelector(".purchase-items-table");
+    const wrapper = table.closest(".table-scroll-wrapper");
+    const visibleRows = Array.from(table.tBodies[0].rows).slice(0, 4);
+
+    if(table.tBodies[0].rows.length <= 4){
+        wrapper.style.maxHeight = "";
+        return;
+    }
+
+    const tableMarginTop = parseFloat(getComputedStyle(table).marginTop) || 0;
+    const headerHeight = table.tHead.getBoundingClientRect().height;
+    const rowsHeight = visibleRows.reduce(
+        (height, row) => height + row.getBoundingClientRect().height,
+        0
+    );
+    const horizontalScrollbarHeight = table.scrollWidth > wrapper.clientWidth ? 12 : 0;
+
+    wrapper.style.maxHeight =
+        tableMarginTop + headerHeight + rowsHeight + horizontalScrollbarHeight + "px";
 }
 
 function removeItem(index){
@@ -1197,17 +1324,45 @@ renderTable();
 }
 
 function savePurchase(){
+    const saveButton = document.getElementById("saveBtn");
+    const supplierId = document.getElementById("supplierId").value;
+    const invoiceNo = document.getElementById("invoiceNo").value.trim();
+    const purchaseDate = document.getElementById("purchaseDate").value;
+
+    if(!supplierId){
+        alert("Please select Supplier.");
+        document.getElementById("supplierSelect").focus();
+        return;
+    }
+
+    if(!invoiceNo){
+        alert("Please enter Invoice No.");
+        document.getElementById("invoiceNo").focus();
+        return;
+    }
+
+    if(!purchaseDate){
+        alert("Please select Purchase Date.");
+        document.getElementById("purchaseDate").focus();
+        return;
+    }
+
+    if(purchaseItems.length === 0){
+        alert("Please add at least one Medicine.");
+        document.getElementById("medicineSearch").focus();
+        return;
+    }
 
 	let request = {
 
 			supplierId:
-				document.getElementById("supplierId").value,
+				supplierId,
 
 			invoiceNo:
-			document.getElementById("invoiceNo").value,
+			invoiceNo,
 
 			purchaseDate:
-			document.getElementById("purchaseDate").value,
+			purchaseDate,
 
 			batchNo:
 			document.getElementById("batchNo").value,
@@ -1215,6 +1370,8 @@ function savePurchase(){
 			items:purchaseItems
 
 			};
+
+    saveButton.disabled = true;
 
 fetch("/api/purchases",{
 
@@ -1303,7 +1460,10 @@ body:JSON.stringify(request)
 })
 .catch(error=>{
     console.error("Purchase Save Error:", error);
-    alert("Purchase save failed.");
+    alert(error.message || "Purchase save failed.");
+})
+.finally(()=>{
+    saveButton.disabled = false;
 });
 
 
@@ -1320,10 +1480,17 @@ function closePage(){
 function loadPurchases(){
 
 	fetch("/api/purchases")
-
-	.then(res=>res.json())
+	.then(res=>{
+        if(!res.ok){
+            throw new Error("Purchase history could not be loaded.");
+        }
+        return res.json();
+    })
 
 	.then(data=>{
+    if(!Array.isArray(data)){
+        throw new Error("Purchase history response was invalid.");
+    }
 
 	let rows="";
 
@@ -1331,9 +1498,9 @@ function loadPurchases(){
 
 	data.forEach(p=>{
 
-	p.items.forEach(item=>{
+	(Array.isArray(p.items) ? p.items : []).forEach(item=>{
 
-	total+=item.amount;
+	total+=Number(item.amount) || 0;
 
 	rows+=`
 	<tr>
@@ -1359,14 +1526,21 @@ function loadPurchases(){
 
 	document.getElementById("purchaseTable").innerHTML=rows;
 
+    updatePurchaseTableScroll();
+
 	document.getElementById("totalAmount").innerText=total;
 
-	});
+	})
+    .catch(error=>{
+        console.error("Purchase Loading Error:", error);
+        alert(error.message || "Purchase history could not be loaded.");
+    });
 
 	}
 window.onload = function(){
 
     document.getElementById("invoiceNo").focus();
+    loadPurchases();
 
 };
 document.addEventListener("keydown", function(e){

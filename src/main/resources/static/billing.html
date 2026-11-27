@@ -2,6 +2,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="stylesheet" href="/table-scroll.css">
+<script src="/table-scroll.js" defer></script>
 <meta charset="UTF-8">
 <title>Medical Billing System</title>
 
@@ -328,7 +330,21 @@ box-shadow:0 2px 10px rgba(0,0,0,.2);
     background:#fff;
     box-shadow:0 10px 24px rgba(15,23,42,.2);
 }
-
+.bill-row-medicine-dropdown::-webkit-scrollbar{
+    width:12px;
+    height:12px;
+}
+.bill-row-medicine-dropdown::-webkit-scrollbar-track{
+    background:#f1f1f1;
+}
+.bill-row-medicine-dropdown::-webkit-scrollbar-thumb{
+    border:2px solid #f1f1f1;
+    border-radius:8px;
+    background:#888;
+}
+.bill-row-medicine-dropdown::-webkit-scrollbar-thumb:hover{
+    background:#555;
+}
 .bill-row-action{
     display:inline-grid;
     width:30px;
@@ -1167,11 +1183,12 @@ value="0" readonly>
 </div>
 <script>
 
+// medicines[] still used to cache selected medicines so row-click & bill submission work
 let medicines = [];
 let billItems = [];
 
 loadCustomers();
-loadMedicines();
+// No longer pre-loading all medicines on start — search is now server-side
 
 let customers = [];
 
@@ -1263,14 +1280,169 @@ function selectCustomer(id, name){
 
     document.getElementById("customerDropdown").style.display = "none";
 }function loadMedicines(){
-	fetch("/api/medicines")
-	.then(res => res.json())
-	.then(data => {
+	// kept for backward-compat — no longer bulk-loads. No-op.
+}
 
-	    medicines = data;
+/* =====================================================
+   MEDICINE SEARCH  — server-side, debounced, paginated
+   =====================================================
+   Config: change PAGE_SIZE to show more/fewer results.
+   The server caps at 25; default is 20 per page.
+ */
+const MEDICINE_SEARCH_PAGE_SIZE = 20;
 
+// Per-dropdown state: { abortController, debounceTimer, page, totalPages, query, requestedQuery, loading }
+const _dropdownState = new WeakMap();
+
+function _getDropdownState(dropdown){
+	if(!_dropdownState.has(dropdown)){
+		_dropdownState.set(dropdown, {
+			abortController: null,
+			debounceTimer: null,
+			page: 0,
+			totalPages: 1,
+			query: "",
+			requestedQuery: "",
+			loading: false
+		});
+	}
+	return _dropdownState.get(dropdown);
+}
+
+/**
+ * Fetch a page of matching medicines from the server and append rows to dropdown.
+ * If page === 0 the dropdown content is replaced; otherwise rows are appended (infinite scroll).
+ */
+async function _fetchMedicinePage(dropdown, query, page){
+	const state = _getDropdownState(dropdown);
+
+	// Cancel any in-flight request
+	if(state.abortController) state.abortController.abort();
+	const controller = new AbortController();
+	state.abortController = controller;
+	state.loading = true;
+
+	const url = `/api/medicines/search?q=${encodeURIComponent(query)}&page=${page}&size=${MEDICINE_SEARCH_PAGE_SIZE}`;
+	try {
+		const res = await fetch(url, { signal: controller.signal });
+		if(!res.ok) throw new Error("Search failed");
+		const data = await res.json();   // Spring Page object
+
+		if(state.abortController !== controller || state.requestedQuery !== query){
+			return null;
+		}
+
+		state.page = data.number;
+		state.totalPages = data.totalPages;
+		state.query = query;
+		state.loading = false;
+
+		// Cache fetched medicines so selectMedicineForBillRow() can resolve them
+		(data.content || []).forEach(m => {
+			if(!medicines.some(x => String(x.id) === String(m.id))){
+				medicines.push(m);
+			}
+		});
+
+		return data.content || [];
+	} catch(err){
+		if(err.name !== "AbortError"){
+			console.error("Medicine search error:", err);
+			if(state.abortController === controller && state.requestedQuery === query){
+				const message = document.createElement("div");
+				message.style.cssText = "padding:10px 14px;color:#b91c1c;font-size:13px;";
+				message.textContent = "Medicine search failed. Please try again.";
+				dropdown.replaceChildren(message);
+			}
+		}
+		if(state.abortController === controller){
+			state.loading = false;
+		}
+		return null; // null = aborted/error (don't update UI)
+	}
+}
+
+/**
+ * Render a page of results into the dropdown.
+ * page === 0 → replace; page > 0 → append (more results).
+ */
+async function _renderMedicineSearchPage(dropdown, query, page){
+	const rows = await _fetchMedicinePage(dropdown, query, page);
+	if(rows === null) return; // aborted
+
+	if(page === 0){
+		// Fresh search — rebuild dropdown
+		dropdown.replaceChildren();
+		dropdown.dataset.activeIndex = "-1";
+	}
+
+	// Remove any existing "Load more" row before appending
+	const existingLoadMore = dropdown.querySelector(".med-load-more-row");
+	if(existingLoadMore) existingLoadMore.remove();
+
+	if(page === 0 && !rows.length){
+		// No results
+		const noResult = document.createElement("div");
+		noResult.style.cssText = "padding:10px 14px;color:#888;font-size:13px;";
+		noResult.textContent = query ? `No medicines found for "${query}"` : "Start typing to search medicines...";
+		dropdown.appendChild(noResult);
+		return;
+	}
+
+	// Build a table if starting fresh, or find existing tbody
+	let tbody;
+	let existingTable = dropdown.querySelector("table.medicine-suggestions-table");
+	if(!existingTable){
+		existingTable = createMedicineSuggestionsTable([]);
+		dropdown.appendChild(existingTable);
+	}
+	tbody = existingTable.querySelector("tbody");
+
+	rows.forEach(medicine => {
+		const row = document.createElement("tr");
+		row.dataset.medicineId = medicine.id;
+		[
+			medicine.medicineName || "",
+			medicine.companyName || "Not specified",
+			medicine.quantity ?? 0,
+			medicine.scheduleType || "Not specified",
+			medicine.contents || "Not specified",
+			medicine.symptoms || "Not specified"
+		].forEach(value => {
+			const cell = document.createElement("td");
+			cell.textContent = value;
+			row.appendChild(cell);
+		});
+		tbody.appendChild(row);
 	});
 
+	// "Load more" row if more pages available
+	const state = _getDropdownState(dropdown);
+	if(state.page + 1 < state.totalPages){
+		const tr = document.createElement("tr");
+		tr.className = "med-load-more-row";
+		const td = document.createElement("td");
+		td.colSpan = 6;
+		td.style.cssText = "text-align:center;padding:8px;cursor:pointer;color:#2196f3;font-weight:bold;background:#f0f8ff;";
+		td.textContent = "⬇ Load more results…";
+		td.addEventListener("click", function(e){
+			e.stopPropagation();
+			_renderMedicineSearchPage(dropdown, state.query, state.page + 1);
+		});
+		tr.appendChild(td);
+		tbody.appendChild(tr);
+	}
+
+	// Show page info (total hits)
+	const totalEl = dropdown.querySelector(".med-total-hint");
+	const total = _getDropdownState(dropdown).totalPages * MEDICINE_SEARCH_PAGE_SIZE;
+	if(!totalEl && rows.length){
+		const hint = document.createElement("div");
+		hint.className = "med-total-hint";
+		hint.style.cssText = "padding:4px 10px;font-size:11px;color:#888;border-top:1px solid #e5e7eb;";
+		hint.textContent = `Showing ${MEDICINE_SEARCH_PAGE_SIZE} per page`;
+		dropdown.appendChild(hint);
+	}
 }
 
 function createMedicineSuggestionsTable(matchingMedicines){
@@ -1314,6 +1486,7 @@ function updateMedicineReferenceDetails(medicine){
 function renderTable(){
 
 const body = document.getElementById("billBody");
+document.querySelectorAll(".bill-row-medicine-dropdown").forEach(dropdown => dropdown.remove());
 body.replaceChildren();
 
 billItems.forEach((item,index)=>{
@@ -1423,7 +1596,8 @@ billItems.forEach((item,index)=>{
 		selectMedicineForBillRow(index, option.dataset.medicineId);
 	});
 
-	medicineEditor.append(medicineInput, rowDropdown);
+	medicineEditor.appendChild(medicineInput);
+	document.body.appendChild(rowDropdown);
 	medicineCell.appendChild(medicineEditor);
 	row.insertBefore(medicineCell, row.cells[1]);
 
@@ -1462,6 +1636,15 @@ billItems.forEach((item,index)=>{
 updateBillSubtotal();
 document.getElementById("billingActions").hidden = !billItems.some(isBillItemReady);
 
+const billTable = document.getElementById("billTable");
+const tableContainer = billTable.closest(".table-container");
+const visibleRows = Array.from(body.rows).slice(0, 3);
+const threeRowsHeight = billTable.tHead.getBoundingClientRect().height
+	+ visibleRows.reduce((height, row) => height + row.getBoundingClientRect().height, 0);
+tableContainer.style.maxHeight = billItems.length > 3
+	? threeRowsHeight + "px"
+	: "";
+
 calculateTotal();
 }
 
@@ -1476,18 +1659,55 @@ function isBillItemReady(item){
 }
 
 function openRowMedicineSuggestions(editor, dropdown, searchText){
+	const state = _getDropdownState(dropdown);
+	const query = String(searchText || "").trim();
+
+	// Close all other open dropdowns
 	document.querySelectorAll(".bill-row-medicine-dropdown").forEach(openDropdown => {
 		if(openDropdown !== dropdown){
 			openDropdown.style.display = "none";
 		}
 	});
 
-	renderRowMedicineSuggestions(dropdown, searchText);
-	if(!dropdown.childElementCount){
+	if(query === state.query && dropdown.querySelector("tr[data-medicine-id]")){
+		dropdown.style.display = "block";
+		_positionDropdown(dropdown, editor);
+		return;
+	}
+
+	if(state.debounceTimer){
+		clearTimeout(state.debounceTimer);
+		state.debounceTimer = null;
+	}
+	if(state.abortController){
+		state.abortController.abort();
+		state.abortController = null;
+	}
+	state.requestedQuery = query;
+
+	// If box is empty, hide and clear
+	if(!query){
+		dropdown.replaceChildren();
 		dropdown.style.display = "none";
 		return;
 	}
 
+	// Show dropdown immediately (may be empty while loading)
+	dropdown.replaceChildren();
+	dropdown.style.display = "block";
+	_positionDropdown(dropdown, editor);
+
+	state.debounceTimer = setTimeout(() => {
+		state.debounceTimer = null;
+		_renderMedicineSearchPage(dropdown, query, 0).then(() => {
+			if(state.requestedQuery === query && dropdown.childElementCount){
+				_positionDropdown(dropdown, editor);
+			}
+		});
+	}, 300);
+}
+
+function _positionDropdown(dropdown, editor){
 	const editorRect = editor.getBoundingClientRect();
 	const viewportPadding = 12;
 	const dropdownWidth = Math.min(1200, window.innerWidth - viewportPadding * 2);
@@ -1495,7 +1715,6 @@ function openRowMedicineSuggestions(editor, dropdown, searchText){
 	const availableBelow = window.innerHeight - editorRect.bottom - viewportPadding;
 	const placeBelow = availableBelow >= Math.min(160, dropdownHeight);
 
-	dropdown.style.display = "block";
 	dropdown.style.width = dropdownWidth + "px";
 	dropdown.style.maxHeight = Math.max(
 		120,
@@ -1512,21 +1731,12 @@ function openRowMedicineSuggestions(editor, dropdown, searchText){
 }
 
 function renderRowMedicineSuggestions(dropdown, searchText){
-	const search = String(searchText || "").trim().toLowerCase();
-	dropdown.replaceChildren();
-	dropdown.dataset.activeIndex = "-1";
-
-	const matchingMedicines = medicines.filter(m =>
-		!search || [
-			m.medicineName,
-			m.companyName,
-			m.contents,
-			m.symptoms
-		].some(value => String(value || "").toLowerCase().includes(search))
-	);
-	if(!matchingMedicines.length) return;
-
-	dropdown.appendChild(createMedicineSuggestionsTable(matchingMedicines));
+	// Legacy stub — real work now done server-side via openRowMedicineSuggestions.
+	// Editor is unknown here; just trigger the query without repositioning.
+	const query = String(searchText || "").trim();
+	if(!query){ dropdown.style.display = "none"; return; }
+	_getDropdownState(dropdown).requestedQuery = query;
+	_renderMedicineSearchPage(dropdown, query, 0);
 }
 
 function selectMedicineForBillRow(index, medicineId, focusNextRow = false){

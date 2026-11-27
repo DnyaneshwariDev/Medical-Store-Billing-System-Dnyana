@@ -14,7 +14,6 @@ import com.medical.entity.Purchase;
 import com.medical.entity.PurchaseItem;
 import com.medical.entity.Supplier;
 import com.medical.repository.MedicineRepository;
-import com.medical.repository.PurchaseItemRepository;
 import com.medical.repository.PurchaseRepository;
 import com.medical.repository.SupplierRepository;
 
@@ -29,11 +28,11 @@ public class PurchaseService {
   private SupplierRepository supplierRepository;
     @Autowired
   private MedicineRepository medicineRepository;
-    @Autowired
-  private PurchaseItemRepository purchaseItemRepository;
+
     public List<Purchase> getAll() {
         return purchaseRepository.findAll();
     }
+
     @Transactional
     public Purchase createPurchase(PurchaseRequest request) {
         List<PurchaseItem> itemList = new ArrayList<>();
@@ -47,12 +46,8 @@ public class PurchaseService {
 
         purchase.setSupplier(supplier);
         purchase.setInvoiceNo(request.getInvoiceNo());
-
-        purchase.setPurchaseDate(
-        	    LocalDate.parse(request.getPurchaseDate())
-        	);       
-
-       
+        purchase.setBatchNo(request.getBatchNo());
+        purchase.setPurchaseDate(LocalDate.parse(request.getPurchaseDate()));
 
         for(PurchaseItemRequest itemRequest :
                 request.getItems()) {
@@ -84,49 +79,41 @@ public class PurchaseService {
             item.setExpiryDate(
                 LocalDate.parse(itemRequest.getExpiryDate())
             );
+
             double amount =
                 itemRequest.getQuantity()
                 * itemRequest.getPurchaseRate();
 
             item.setAmount(amount);
-
-            purchaseItemRepository.save(item);
-
             total += amount;
-
-            // STOCK UPDATE
-
-            medicine.setPurchasePrice(itemRequest.getPurchaseRate());
-
-            medicine.setMrp(itemRequest.getSaleRate());
-
-            medicine.setQuantity(
-                    medicine.getQuantity() + itemRequest.getQuantity());
-
-            medicine.setBatchNo(itemRequest.getBatchNo());
-
-            medicine.setGstPercent(itemRequest.getGst());
-
-            medicine.setExpiryDate(
-                    LocalDate.parse(itemRequest.getExpiryDate()));
-
-            medicineRepository.save(medicine);
             itemList.add(item);
         }
+
         purchase.setItems(itemList);
         purchase.setTotalAmount(total);
+
+        Purchase savedPurchase = purchaseRepository.save(purchase);
+
+        for (PurchaseItem item : savedPurchase.getItems()) {
+            Medicine medicine = item.getMedicine();
+            medicine.setPurchasePrice(item.getPurchaseRate());
+            medicine.setMrp(item.getSaleRate());
+            medicine.setQuantity(
+                medicine.getQuantity() + item.getQuantity());
+            medicine.setBatchNo(item.getBatchNo());
+            medicine.setGstPercent(item.getGst());
+            medicine.setExpiryDate(item.getExpiryDate());
+
+            medicineRepository.save(medicine);
+        }
+
         supplier.setBalance(
+            supplier.getBalance() == null
+                ? total
+                : supplier.getBalance() + total);
+        supplierRepository.save(supplier);
 
-        		supplier.getBalance()==null
-
-        		? total
-
-        		: supplier.getBalance()+total
-
-        		);
-
-        		supplierRepository.save(supplier);
-        return purchaseRepository.save(purchase);
+        return savedPurchase;
     }
     public Purchase save(Purchase purchase) {
         return purchaseRepository.save(purchase);
