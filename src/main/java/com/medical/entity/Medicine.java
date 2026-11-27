@@ -11,8 +11,10 @@ public class Medicine {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(length = 1000)
     private String medicineName;
 
+    @Column(length = 1000)
     private String companyName;
     private String batchNo;
     private String unit;

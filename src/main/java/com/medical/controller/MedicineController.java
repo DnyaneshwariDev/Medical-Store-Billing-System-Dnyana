@@ -3,6 +3,7 @@ package com.medical.controller;
 import com.medical.entity.Medicine;
 import com.medical.repository.MedicineRepository;
 import com.medical.service.MedicineService;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -30,6 +31,19 @@ public class MedicineController {
     @GetMapping
     public List<Medicine> getAllMedicines() {
         return medicineService.getAllMedicines();
+    }
+
+    /**
+     * Search medicines with pagination.
+     * GET /api/medicines/search?q=para&page=0&size=20
+     * Returns a Spring Page object: { content: [...], totalElements, totalPages, ... }
+     */
+    @GetMapping("/search")
+    public Page<Medicine> searchMedicines(
+            @RequestParam(name = "q", defaultValue = "") String q,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
+        return medicineService.searchMedicines(q, page, size);
     }
     
     @GetMapping("/{id}")

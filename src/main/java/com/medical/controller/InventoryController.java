@@ -3,6 +3,7 @@ package com.medical.controller;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,7 +29,8 @@ public class InventoryController {
 
     @GetMapping("/low-stock")
     public List<Medicine> getLowStockMedicines() {
-        return medicineRepository.findByQuantityLessThan(10);
+        return medicineRepository.findByQuantityLessThanOrderByQuantityAscIdAsc(
+                10, PageRequest.of(0, 20));
     }
 
     @GetMapping("/out-of-stock")
@@ -44,8 +46,9 @@ public class InventoryController {
                 today.plusDays(30);
 
         return medicineRepository
-                .findByExpiryDateBetween(
+                .findByExpiryDateBetweenOrderByExpiryDateAscIdAsc(
                         today,
-                        next30Days);
+                        next30Days,
+                        PageRequest.of(0, 20));
     }
 }

@@ -14,8 +14,14 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+
 @Service
 public class MedicineService {
+    private static final int DEFAULT_SEARCH_PAGE_SIZE = 20;
+    private static final int MAX_SEARCH_PAGE_SIZE = 25;
+
 	@Autowired
 	private ScheduleRepository repository;
 	@Autowired
@@ -59,6 +65,24 @@ public class MedicineService {
 
     public List<Medicine> getAllMedicines() {
         return medicineRepository.findAll();
+    }
+
+    public Page<Medicine> searchMedicines(String query, int page, int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = size <= 0
+                ? DEFAULT_SEARCH_PAGE_SIZE
+                : Math.min(size, MAX_SEARCH_PAGE_SIZE);
+        PageRequest pageRequest = PageRequest.of(safePage, safeSize);
+        String normalizedQuery = query == null ? "" : query.trim();
+
+        if (normalizedQuery.isEmpty()) {
+            return Page.empty(pageRequest);
+        }
+
+        return medicineRepository.searchMedicines(
+                normalizedQuery,
+                pageRequest
+        );
     }
 
     public Medicine getMedicineById(Long id) {

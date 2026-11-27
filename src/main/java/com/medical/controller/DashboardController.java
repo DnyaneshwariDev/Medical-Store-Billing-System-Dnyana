@@ -1,6 +1,5 @@
 package com.medical.controller;
 
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -9,14 +8,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.medical.entity.Bill;
-import com.medical.entity.Medicine;
-import com.medical.entity.Purchase;
 import com.medical.repository.BillItemRepository;
 import com.medical.repository.BillRepository;
 import com.medical.repository.CustomerRepository;
@@ -28,276 +25,128 @@ import com.medical.repository.SupplierRepository;
 @RequestMapping("/api/dashboard")
 @CrossOrigin("*")
 public class DashboardController {
-	@Autowired private BillRepository billRepo; 
+	private static final int ALERT_LIMIT = 20;
+
+	@Autowired private BillRepository billRepo;
 	@Autowired private BillItemRepository billItemRepo;
-	@Autowired private PurchaseRepository purchaseRepo; 
-	@Autowired private MedicineRepository medicineRepo; 
+	@Autowired private PurchaseRepository purchaseRepo;
+	@Autowired private MedicineRepository medicineRepo;
 	@Autowired private SupplierRepository supplierRepository;
 	@Autowired private CustomerRepository customerRepository;
-	@GetMapping("/inventory") 
-	public Map<String,Integer> inventoryGraph()
-	{
-		int available = 0; int lowStock = 0; 
-		int outOfStock = 0; 
-		List<Medicine> medicines = medicineRepo.findAll(); 
-		for(Medicine m : medicines){ 
-			if(m.getQuantity()==null || m.getQuantity()==0){ outOfStock++; 
-			} else if(m.getQuantity()<=10){ lowStock++; } 
-			else{ available++; } }
-		Map<String,Integer> map = new HashMap<>();
-		map.put("available", available); 
-		map.put("lowStock", lowStock);
-		map.put("outOfStock", outOfStock);
-		return map; 
-		}
-	
+
+	@GetMapping("/inventory")
+	public Map<String, Integer> inventoryGraph() {
+		Object[] counts = medicineRepo.getInventoryCounts();
+		Map<String, Integer> map = new HashMap<>();
+		map.put("available", ((Number) counts[3]).intValue());
+		map.put("lowStock", ((Number) counts[2]).intValue());
+		map.put("outOfStock", ((Number) counts[1]).intValue());
+		return map;
+	}
+
 	@GetMapping("/alerts")
 	public Map<String, Object> getAlerts() {
+		LocalDate today = LocalDate.now();
+		PageRequest firstPage = PageRequest.of(0, ALERT_LIMIT);
+		Map<String, Object> map = new HashMap<>();
 
-	    Map<String, Object> map = new HashMap<>();
-
-	    List<Medicine> lowStock =
-	            medicineRepo.findByQuantityLessThan(10);
-
-	    List<Medicine> expiring =
-	            medicineRepo.findByExpiryDateBetween(
-	                    LocalDate.now(),
-	                    LocalDate.now().plusDays(30));
-
-	    map.put("lowStock", lowStock);
-	    map.put("expiring", expiring);
-
-	    return map;
+		map.put("lowStock",
+				medicineRepo.findByQuantityLessThanOrderByQuantityAscIdAsc(10, firstPage));
+		map.put("expiring",
+				medicineRepo.findByExpiryDateBetweenOrderByExpiryDateAscIdAsc(
+						today, today.plusDays(30), firstPage));
+		return map;
 	}
+
 	@GetMapping("/stast")
-    public Map<String,Object> getDashboard() {
+	public Map<String, Object> getDashboard() {
+		Map<String, Object> dashboard = new HashMap<>();
+		LocalDate today = LocalDate.now();
+		LocalDateTime start = today.atStartOfDay();
+		LocalDateTime end = today.plusDays(1).atStartOfDay();
 
-        Map<String,Object> dashboard =
-                new HashMap<>();
+		dashboard.put("totalMedicines", medicineRepo.count());
+		dashboard.put("totalCustomers", customerRepository.count());
+		dashboard.put("outOfStock", medicineRepo.countByQuantityLessThan(1));
+		dashboard.put("totalSuppliers", supplierRepository.count());
+		dashboard.put("totalBills",
+				billRepo.countByBillDateGreaterThanEqualAndBillDateLessThan(start, end));
 
-        dashboard.put(
-                "totalMedicines",
-                medicineRepo.count());
+		double todaySales = billRepo.sumTotalAmountByBillDateBetween(start, end);
+		double todayPurchase = purchaseRepo.sumTotalAmountByPurchaseDate(today);
+		double todayCost = billItemRepo.sumCostByBillDateBetween(start, end);
+		dashboard.put("todaySales", todaySales);
+		dashboard.put("todayPurchase", todayPurchase);
+		dashboard.put("todayProfit", (int) (todaySales - todayCost));
+		return dashboard;
+	}
 
-        dashboard.put(
-                "totalCustomers",
-                customerRepository.count());
-
-        
-
-        dashboard.put(
-                "outOfStock",
-                medicineRepo
-                        .findByQuantityLessThan(1)
-                        .size());
-
-       
-        dashboard.put(
-                "totalSuppliers",
-                supplierRepository.count());
-
-        LocalDate today = LocalDate.now();
-
-        LocalDateTime start = today.atStartOfDay();
-
-        LocalDateTime end = today.plusDays(1).atStartOfDay();
-
-        dashboard.put(
-            "totalBills",
-            billRepo.countByBillDateBetween(start, end));
-       
-
-        	
-        	// =========================
-            // TODAY SALES
-            // =========================
-
-            double todaySales =
-                    billRepo.findAll()
-                            .stream()
-                            .filter(b ->
-                                    b.getBillDate() != null &&
-                                    b.getBillDate()
-                                     .toLocalDate()
-                                     .equals(LocalDate.now()))
-                            .mapToDouble(b ->
-                                    b.getTotalAmount() == null
-                                            ? 0
-                                            : b.getTotalAmount())
-                            .sum();
-
-            // =========================
-            // TODAY PURCHASE
-            // =========================
-
-            double todayPurchase =
-            		purchaseRepo.findAll()
-                            .stream()
-                            .filter(p ->
-                                    p.getPurchaseDate() != null &&
-                                    p.getPurchaseDate()
-                                     .equals(LocalDate.now()))
-                            .mapToDouble(p ->
-                                    p.getTotalAmount() == null
-                                            ? 0
-                                            : p.getTotalAmount())
-                            .sum();
-
-            // =========================
-            // TODAY PROFIT
-            // =========================
-
-            double todayCost = 0;
-
-            for(var item : billItemRepo.findAll()) {
-
-                if(item.getBill() != null
-                   && item.getBill().getBillDate() != null
-                   && item.getBill()
-                          .getBillDate()
-                          .toLocalDate()
-                          .equals(LocalDate.now())) {
-
-                    if (item.getMedicine() == null) {
-                        todayCost += item.getAmount() == null
-                                ? 0
-                                : item.getAmount();
-                        continue;
-                    }
-
-                    Double purchasePrice =
-                        item.getMedicine().getPurchasePrice();
-
-                    if(purchasePrice == null) {
-                        purchasePrice = 0.0;
-                    }
-
-                    todayCost +=
-                        purchasePrice *
-                        item.getQuantity();
-                }
-            }
-
-            double todayProfit =
-                    todaySales - todayCost;
-            int i=(int)todayProfit;
-            dashboard.put("todaySales", todaySales);
-
-            dashboard.put("todayPurchase", todayPurchase);
-
-            dashboard.put("todayProfit", i);
-
-           
-        	
-        	
-
-        return dashboard;
-    }
 	@GetMapping("/sales")
-	public List<Double> salesGraph(){
-
-
-	double[] months = new double[12];
-
-	List<Bill> bills = billRepo.findAll();
-
-	for(Bill b : bills){
-
-	    if(b.getBillDate()!=null){
-
-	        int month =
-	        b.getBillDate().getMonthValue()-1;
-
-	        months[month] +=
-	        b.getTotalAmount();
-	    }
+	public List<Double> salesGraph() {
+		return monthlyTotals(billRepo.sumTotalAmountByMonth());
 	}
 
-	List<Double> result = new ArrayList<>();
-
-	for(double d : months){
-	    result.add(d);
-	}
-
-	return result;
-	
-	}
 	@GetMapping("/purchase")
-	public List<Double> purchaseGraph(){
-
-	double[] months = new double[12];
-
-	List<Purchase> purchases =
-	purchaseRepo.findAll();
-
-	for(Purchase p : purchases){
-
-	    if(p.getPurchaseDate()!=null){
-
-	        int month =
-	        p.getPurchaseDate().getMonthValue()-1;
-
-	        months[month] +=
-	        p.getTotalAmount();
-	    }
+	public List<Double> purchaseGraph() {
+		return monthlyTotals(purchaseRepo.sumTotalAmountByMonth());
 	}
 
-	List<Double> result = new ArrayList<>();
-
-	for(double d : months){
-	    result.add(d);
-	}
-
-	return result;
-
-
-	}
 	@GetMapping("/top-medicines")
-	public Map<String,Object> topMedicines(){
+	public Map<String, Object> topMedicines() {
+		List<String> names = new ArrayList<>();
+		List<Integer> quantities = new ArrayList<>();
 
-	List<Medicine> medicines =
-	medicineRepo.findAll();
+		billItemRepo.findTopSellingMedicines(PageRequest.of(0, 5))
+				.forEach(medicine -> {
+					names.add(medicine.getMedicineName());
+					quantities.add(medicine.getSaleQuantity().intValue());
+				});
 
-	medicines.sort((a,b)->{
+		Map<String, Object> map = new HashMap<>();
+		map.put("labels", names);
+		map.put("data", quantities);
+		return map;
+	}
 
-	    Integer qtyA =
-	    billItemRepo.getSaleQty(a.getId());
+	@GetMapping("/recent-purchases")
+	public List<Map<String, Object>> recentPurchases() {
+		List<Map<String, Object>> purchases = new ArrayList<>();
+		purchaseRepo.findRecentPurchases(PageRequest.of(0, 5)).forEach(purchase -> {
+			Map<String, Object> row = new HashMap<>();
+			row.put("invoiceNo", purchase.getInvoiceNo());
+			row.put("supplierName", purchase.getSupplierName());
+			row.put("purchaseDate", purchase.getPurchaseDate());
+			row.put("totalAmount", purchase.getTotalAmount());
+			purchases.add(row);
+		});
+		return purchases;
+	}
 
-	    Integer qtyB =
-	    billItemRepo.getSaleQty(b.getId());
+	@GetMapping("/recent-bills")
+	public List<Map<String, Object>> recentBills() {
+		List<Map<String, Object>> bills = new ArrayList<>();
+		billRepo.findRecentBills(PageRequest.of(0, 5)).forEach(bill -> {
+			Map<String, Object> row = new HashMap<>();
+			row.put("id", bill.getId());
+			row.put("customerName", bill.getCustomerName());
+			row.put("billDate", bill.getBillDate());
+			row.put("totalAmount", bill.getTotalAmount());
+			bills.add(row);
+		});
+		return bills;
+	}
 
-	    return qtyB.compareTo(qtyA);
+	private List<Double> monthlyTotals(List<Object[]> aggregates) {
+		double[] months = new double[12];
+		for (Object[] aggregate : aggregates) {
+			int monthIndex = ((Number) aggregate[0]).intValue() - 1;
+			months[monthIndex] = ((Number) aggregate[1]).doubleValue();
+		}
 
-	});
-
-	List<String> names =
-	new ArrayList<>();
-
-	List<Integer> qtys =
-	new ArrayList<>();
-
-	for(int i=0;
-	    i<Math.min(5, medicines.size());
-	    i++){
-
-	    Medicine m =
-	    medicines.get(i);
-
-	    names.add(
-	    m.getMedicineName());
-	    qtys.add(
-	    	    billItemRepo.getSaleQty(
-	    	    m.getId()));
-	    	}
-
-	    	Map<String,Object> map =
-	    	new HashMap<>();
-
-	    	map.put("labels", names);
-	    	map.put("data", qtys);
-
-	    	return map;
-
-	    	}
-
+		List<Double> result = new ArrayList<>(months.length);
+		for (double month : months) {
+			result.add(month);
+		}
+		return result;
+	}
 }
